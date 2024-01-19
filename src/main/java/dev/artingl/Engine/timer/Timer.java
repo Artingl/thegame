@@ -50,7 +50,8 @@ public class Timer {
     }
 
     public void subscribe(ITick tick) {
-        this.subscribers.add(tick);
+        if (!this.subscribers.contains(tick))
+            this.subscribers.add(tick);
     }
 
     public void unsubscribe(ITick tick) {

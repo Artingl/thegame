@@ -7,20 +7,26 @@ import dev.artingl.Engine.renderer.mesh.ModelMesh;
 import dev.artingl.Engine.renderer.scene.BaseScene;
 import dev.artingl.Engine.renderer.scene.components.ComponentFinalField;
 import dev.artingl.Engine.renderer.scene.components.InstancedMeshComponent;
+import dev.artingl.Engine.renderer.scene.components.RigidBodyComponent;
+import dev.artingl.Engine.renderer.scene.components.collider.BoxColliderComponent;
 import dev.artingl.Engine.renderer.scene.components.collider.TerrainColliderComponent;
 import dev.artingl.Engine.renderer.scene.components.transform.InstancedTransformComponent;
 import dev.artingl.Engine.renderer.scene.components.transform.TransformComponent;
 import dev.artingl.Engine.renderer.scene.nodes.SceneNode;
+import dev.artingl.Engine.renderer.scene.nodes.sprites.BoxNode;
+import dev.artingl.Engine.renderer.scene.nodes.sprites.SphereNode;
 import dev.artingl.Engine.timer.Timer;
 import dev.artingl.Game.GameDirector;
 import dev.artingl.Game.level.Level;
 import dev.artingl.Game.level.chunk.Chunk;
 import dev.artingl.Game.level.chunk.environment.EnvironmentObjects;
 import dev.artingl.Game.scene.node.*;
+import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import oshi.util.tuples.Pair;
+import oshi.util.tuples.Triplet;
 
 import java.util.Collection;
 
@@ -54,26 +60,20 @@ public class MapScene extends BaseScene {
         this.addNode(this.cameraController);
         this.addNode(this.sky);
 
-        //        this.sphereNode = new SphereNode(2);
-//        this.sphereNode.addComponent(new RigidBodyComponent());
-//        this.sphereNode.getTransform().position.y = 5;
-//        this.sphereNode.getTransform().position.x = 30;
-//        this.sphereNode.getTransform().position.z = 0;
-//        ((RigidBodyComponent) sphereNode.getComponent(RigidBodyComponent.class)).mass = 3;
-//        this.addNode(sphereNode);
-
         // Shelter node
         this.shelterNode = new ShelterNode();
-//        this.addNode(this.shelterNode);
+        this.shelterNode.getTransform().position.y = 1f;
+        this.addNode(this.shelterNode);
 
         // Dingus
         this.dingusNode = new DingusNode();
+        this.dingusNode.getTransform().position.y = 1.8f;
         this.addNode(dingusNode);
 
         this.makeEnvironment();
         this.makeTerrainCollider();
 
-        getEngine().getSoundsManager().setGlobalVolume(0);//0.05f);
+        getEngine().getSoundsManager().setGlobalVolume(0.3f);
     }
 
     public void makeEnvironment() {
@@ -92,11 +92,12 @@ public class MapScene extends BaseScene {
              * vertex info (position, rotation, scale), and render all the objects by just one draw call.
              * */
             SceneNode[] envObjectNodes = new SceneNode[EnvironmentObjects.values().length];
-            for (Pair<EnvironmentObjects, Vector3f> pair: chunk.getEnvObjectsList()) {
+            for (Pair<EnvironmentObjects, Vector3f> pair : chunk.getEnvObjectsList()) {
                 EnvironmentObjects obj = pair.getA();
                 Vector3f position = pair.getB();
+                Vector3f rotation = new Vector3f(0, Utils.randInt(0, 360), 0);
+                SceneNode envNode = envObjectNodes[obj.ordinal()];
                 int objId = obj.ordinal();
-                SceneNode envNode = envObjectNodes[objId];
 
                 /* Initialize the node for the object if we haven't yet */
                 if (envNode == null) {
@@ -118,8 +119,8 @@ public class MapScene extends BaseScene {
                 /* Add the position of the object to the instanced transform, which will later
                  * tell the renderer at what locating we want to render the object
                  */
-                InstancedTransformComponent transform = ((InstancedTransformComponent)(envNode.getTransform()));
-                transform.addInstanceTransform(position, new Vector3f(0, Utils.randInt(0, 360), 0), new Vector3f(1));
+                InstancedTransformComponent transform = ((InstancedTransformComponent) (envNode.getTransform()));
+                transform.addInstanceTransform(position, rotation, new Vector3f(1));
             }
         }
     }

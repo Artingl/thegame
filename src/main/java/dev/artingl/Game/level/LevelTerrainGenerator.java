@@ -12,6 +12,7 @@ import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import oshi.util.tuples.Pair;
+import oshi.util.tuples.Triplet;
 
 import java.util.Map;
 import java.util.Random;
@@ -87,7 +88,7 @@ public class LevelTerrainGenerator {
         chunk.getMesh().setVertices(vertices);
     }
 
-    private Terrain.TerrainMeta[] calculateCorners(Chunk chunk, float x, float z) {
+    public Terrain.TerrainMeta[] calculateCorners(Chunk chunk, float x, float z) {
         Terrain.TerrainMeta m0 = this.generateTerrain(chunk, x + 0, z + 0);
         Terrain.TerrainMeta m1 = this.generateTerrain(chunk, x + STEP, z + 0);
         Terrain.TerrainMeta m2 = this.generateTerrain(chunk, x + 0, z + STEP);
@@ -126,6 +127,25 @@ public class LevelTerrainGenerator {
      */
     public int getCacheSize() {
         return this.cachedTerrain.size();
+    }
+
+    /**
+     * Get normalized normal at point position
+     * */
+    public Vector3f getNormal(Vector3f position) {
+        Chunk chunk = level.getChunkWorld(new Vector2i((int) position.x, (int) position.z));
+        if (chunk == null)
+            return new Vector3f();
+
+        Terrain.TerrainMeta m0 = this.generateTerrain(chunk, position.x + 0, position.z + 0);
+        Terrain.TerrainMeta m1 = this.generateTerrain(chunk, position.x + 2, position.z + 0);
+        Terrain.TerrainMeta m2 = this.generateTerrain(chunk, position.x + 0, position.z + 2);
+
+        Vector3f fv0 = new Vector3f(position.x, m0.getHeight(), position.z);
+        Vector3f fv1 = new Vector3f(position.x + 2, m2.getHeight(), position.z);
+        Vector3f fv2 = new Vector3f(position.x, m1.getHeight(), position.z + 2);
+
+        return new Vector3f(fv1).sub(fv0).cross(new Vector3f(fv2).sub(fv0)).normalize();
     }
 
     public Terrain.TerrainMeta generateTerrain(Chunk chunk, float x, float z) {

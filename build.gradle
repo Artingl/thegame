@@ -49,6 +49,8 @@ dependencies {
     implementation "org.spongepowered:noise:2.0.0-SNAPSHOT"
     implementation "de.articdive:jnoise-pipeline:4.1.0"
     implementation "com.github.mokiat:java-data-front:2.0.1"
+
+    implementation 'org.json:json:20231013'
 }
 
 jar {

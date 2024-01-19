@@ -41,4 +41,9 @@ public interface IModel {
      * Get names of all meshes in the model
      * */
     String[] getMeshNames();
+
+    /**
+     * Get model's properties
+     * */
+    ModelProperties getProperties();
 }

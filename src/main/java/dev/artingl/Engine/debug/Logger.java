@@ -1,5 +1,6 @@
 package dev.artingl.Engine.debug;
 
+import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.misc.Utils;
 
 import java.io.OutputStream;
@@ -55,6 +56,7 @@ public class Logger extends PrintStream {
     public void exception(Exception e, String fmt, Object... args) {
         String excpInfo = Utils.getExceptionDetails(e);
         _log(LogLevel.ERROR, fmt + "\n" + excpInfo, args);
+//        Engine.getInstance().terminate();
     }
 
     public void log(LogLevel level, String fmt, Object... args) {

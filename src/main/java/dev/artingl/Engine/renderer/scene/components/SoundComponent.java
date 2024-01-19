@@ -49,9 +49,9 @@ public class SoundComponent extends Component {
             if (!source.isPlaying() && node.isEnabled)
                 source.play();
 
-//            this.source.setPosition(new Vector3f(node.getTransform().position));
-//            this.source.setVolume(this.volume);
-//            this.isPlaying = this.source.isPlaying();
+            this.source.setPosition(new Vector3f(node.getTransform().position));
+            this.source.setVolume(this.volume);
+            this.isPlaying = this.source.isPlaying();
         }
     }
 }

@@ -207,6 +207,9 @@ public class Debugger implements IPipeline {
                 engine.getOptions().set(Options.Values.RENDER_DISTANCE, 0.0f);
             ImGui.separator();
 
+            if (ImGui.button("Reload"))
+                engine.reload();
+
             if (ImGui.checkbox("vsync", display.isVsyncEnabled())) {
                 display.setVsync(!display.isVsyncEnabled());
             }

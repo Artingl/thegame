@@ -25,13 +25,14 @@ public class CameraControlNode extends CameraNode implements IInput {
 
     public float jumpStrength = 5;
     public float movementSpeed = 2;
-    public float rotationSpeed = 0.7f;
+    public float rotationSpeed = 1.1f;
     public boolean captureControl = true;
 
     // Required for sprinting
     private boolean fovState = false;
 
     private Vector3f oldPosDelta = new Vector3f();
+    private Vector2f oldRotDelta = new Vector2f();
     private final BoxColliderComponent collider;
     private final RigidBodyComponent rigidBody;
     private boolean onGround;
@@ -97,6 +98,7 @@ public class CameraControlNode extends CameraNode implements IInput {
             /* Control camera only if input is captured */
             Vector3f posDelta = new Vector3f();
             Vector2f rotDelta = input.getCursorDelta();
+            this.oldRotDelta = this.oldRotDelta.add(new Vector2f(rotDelta).sub(this.oldRotDelta)).mul(20 / timer.getTickPerSecond());
 
             /*
              * Move the camera in the space on keyboard
@@ -150,7 +152,7 @@ public class CameraControlNode extends CameraNode implements IInput {
             );
 
             /* Update camera rotation */
-            cameraTransform.rotation.add(rotDelta.y * rotationSpeed, rotDelta.x * rotationSpeed, 0);
+            cameraTransform.rotation.add(this.oldRotDelta.y * rotationSpeed, this.oldRotDelta.x * rotationSpeed, 0);
             cameraTransform.rotation.x = Math.max(-90, Math.min(90, cameraTransform.rotation.x));
         }
 

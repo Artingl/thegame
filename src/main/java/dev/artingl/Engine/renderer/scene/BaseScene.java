@@ -332,7 +332,7 @@ public class BaseScene implements ITick, IInput {
     }
 
     private void collideCallback(Object data, DGeom o1, DGeom o2) {
-        int ncontacts = 64;
+        int ncontacts = 32;
         int i;
 
         DBody b1 = o1.getBody();

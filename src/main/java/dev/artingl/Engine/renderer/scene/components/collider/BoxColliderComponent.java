@@ -40,7 +40,7 @@ public class BoxColliderComponent extends BaseColliderComponent {
     @Override
     public void tick(Timer timer) {
         if (this.boxGeometry != null)
-            this.boxGeometry.setLengths(length.z, length.x, length.y);
+            this.boxGeometry.setLengths(length.x, length.z, length.y);
         super.tick(timer);
     }
 

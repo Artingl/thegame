@@ -22,6 +22,7 @@ import static org.lwjgl.opengl.GL11C.GL_TRIANGLES;
 public class OBJModel implements IModel {
 
     private final Resource resource;
+    private final ModelProperties properties;
 
     // key is mesh name, buffer array represents quality levels
     private final Map<String, VerticesBuffer[]> meshes;
@@ -44,6 +45,7 @@ public class OBJModel implements IModel {
         this.parser = new OBJParser();
         this.resource = model;
         this.meshes = new ConcurrentHashMap<>();
+        this.properties = new ModelProperties(this);
         this.validMesh = true;
 
         // Parse all mesh names
@@ -177,7 +179,8 @@ public class OBJModel implements IModel {
         synchronized (meshes) {
             for (VerticesBuffer[] buffers: this.meshes.values()) {
                 for (int i = 0; i < buffers.length; i++) {
-                    buffers[i].cleanup();
+                    if (buffers[i] != null)
+                        buffers[i].cleanup();
                     buffers[i] = null;
                 }
             }
@@ -187,5 +190,10 @@ public class OBJModel implements IModel {
     @Override
     public String[] getMeshNames() {
         return this.meshNames;
+    }
+
+    @Override
+    public ModelProperties getProperties() {
+        return properties;
     }
 }

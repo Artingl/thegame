@@ -2,12 +2,11 @@ package dev.artingl.Engine.renderer.mesh;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.debug.LogLevel;
-import dev.artingl.Engine.misc.MathUtils;
 import dev.artingl.Engine.models.IModel;
+import dev.artingl.Engine.models.ModelProperties;
 import dev.artingl.Engine.renderer.RenderContext;
-import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
-import dev.artingl.Engine.renderer.viewport.Viewport;
+import dev.artingl.Engine.texture.Texture;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
@@ -121,6 +120,27 @@ public class ModelMesh implements IMesh {
         render(context, GL_TRIANGLES);
     }
 
+    private void setupRenderTexture(ShaderProgram program, BaseMesh mesh, String name) {
+        Engine engine = Engine.getInstance();
+
+        if (program != null) {
+            Texture texture = model.getTexture(name);
+
+            // Parse properties of the material, so we can set up texture properly
+            ModelProperties.MaterialProperty material =
+                    model.getProperties().getMaterialProperty(name);
+
+            if (material != null) {
+                if (material.getCustomTexture() != null)
+                    texture = engine.getTextureManager().getTexture(material.getCustomTexture());
+
+                texture.setTiling(material.isTextureTiled());
+            }
+
+            program.setMainTexture(texture);
+        }
+    }
+
     @Override
     public void render(RenderContext context, int mode) {
         int vert = 0, ind = 0;
@@ -149,9 +169,7 @@ public class ModelMesh implements IMesh {
             ind += mesh.getIndicesCount();
             program = mesh.getShaderProgram();
 
-            if (program != null)
-                program.setMainTexture(model.getTexture(name));
-
+            this.setupRenderTexture(program, mesh, name);
             mesh.toggleFade(this.enableFadeAnimation);
             mesh.transform(modelMatrix);
             mesh.render(context, mode);
@@ -194,9 +212,7 @@ public class ModelMesh implements IMesh {
             ind += mesh.getIndicesCount();
             program = mesh.getShaderProgram();
 
-            if (program != null)
-                program.setMainTexture(model.getTexture(name));
-
+            this.setupRenderTexture(program, mesh, name);
             mesh.toggleFade(this.enableFadeAnimation);
             mesh.transform(modelMatrix);
             mesh.renderInstanced(context, mode);
@@ -215,6 +231,12 @@ public class ModelMesh implements IMesh {
 
     @Override
     public void cleanup() {
+        // Deactivate the mesh in the mesh manager
+        Engine.getInstance()
+                .getRenderer()
+                .getMeshManager()
+                .deactivateMesh(this);
+
         model.cleanup();
 
         // Cleanup all meshes
@@ -247,6 +269,12 @@ public class ModelMesh implements IMesh {
 
         this.isDirty = false;
         this.isBaked = true;
+
+        // Activate the mesh in the mesh manager
+        Engine.getInstance()
+                .getRenderer()
+                .getMeshManager()
+                .activateMesh(this);
     }
 
     @Override
@@ -303,6 +331,12 @@ public class ModelMesh implements IMesh {
     @Override
     public void clearInstances() {
         this.instances.clear();
+        this.makeDirty();
+    }
+
+    @Override
+    public void reload() {
+        this.model.cleanup();
         this.makeDirty();
     }
 }

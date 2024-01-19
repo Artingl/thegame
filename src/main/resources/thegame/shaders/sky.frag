@@ -105,4 +105,5 @@ void main() {
 
     float light = min(1, lightLevel + 0.1f);
     fragColor = vec4((skyColor * light) + sunColor + moonColor + starColor, 1);
+//    fragColor = vec4(1);
 }

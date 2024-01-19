@@ -1,9 +1,9 @@
 package dev.artingl.Engine.renderer.shader;
 
 import dev.artingl.Engine.Engine;
+import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
-import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.renderer.RenderContext;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.pipeline.IPipeline;
@@ -19,6 +19,8 @@ import java.util.List;
 import static org.lwjgl.opengl.GL20.*;
 
 public class ShaderProgram implements IPipeline {
+
+
     private final Shader[] shadersList;
     private final List<TextureUniform> textures;
     private int programId;
@@ -178,7 +180,7 @@ public class ShaderProgram implements IPipeline {
     }
 
     public void setMainTexture(Texture texture) {
-        this.mainTexture = texture.textureId();
+        this.mainTexture = texture.getTextureId();
     }
 
     public int getProgramId() {

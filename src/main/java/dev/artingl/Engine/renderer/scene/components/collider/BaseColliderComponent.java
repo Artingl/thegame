@@ -10,6 +10,8 @@ import org.ode4j.ode.internal.DxGeom;
 
 public class BaseColliderComponent extends Component {
 
+    public float yOffset;
+
     protected Runnable triggerHandler;
     protected boolean isColliderBuilt = false;
     protected boolean isGeometryAdded = false;
@@ -74,7 +76,7 @@ public class BaseColliderComponent extends Component {
                 geometry.setPosition(
                         transform.position.x,
                         transform.position.z,
-                        transform.position.y
+                        transform.position.y + this.yOffset
                 );
             }
         }
@@ -85,4 +87,11 @@ public class BaseColliderComponent extends Component {
         return "Collider";
     }
 
+    /**
+     * Set Y offset that would be added when calculating collision with this collider.
+     * Note: If you have rigid body, set the Y offset in the rigid body itself
+     * */
+    public void setYOffset(float offset) {
+        this.yOffset = offset;
+    }
 }

@@ -20,9 +20,4 @@ public class SquareMesh extends BaseMesh {
         this.setMode(GL_QUADS);
     }
 
-    @Override
-    public void bake() {
-        super.bake();
-    }
-
 }

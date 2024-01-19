@@ -20,6 +20,8 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.ode4j.ode.OdeHelper;
 
+import java.util.concurrent.ConcurrentLinkedDeque;
+
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11C.*;
 
@@ -46,6 +48,9 @@ public class Engine implements ITick, IInput {
     private final TextureManager textureManager;
     private final Timer timer;
     private final SoundsManager soundsManager;
+    private final ConcurrentLinkedDeque<IEngineEvent> engineEvents;
+
+    private boolean reload;
 
     public Engine(String name) {
         instance = this;
@@ -64,6 +69,7 @@ public class Engine implements ITick, IInput {
         this.sceneManager = new SceneManager();
         this.debugger = new Debugger();
         this.soundsManager = new SoundsManager(this.logger, this);
+        this.engineEvents = new ConcurrentLinkedDeque<>();
     }
 
     public Input getInput() {
@@ -126,6 +132,7 @@ public class Engine implements ITick, IInput {
 
         // Initialize the display and renderer
         this.display.create();
+        this.display.setVsync(true);
 
         // Initialize OpenGL because after creating display we have GL context in this thread
         GL.createCapabilities();
@@ -145,7 +152,7 @@ public class Engine implements ITick, IInput {
         this.timer.subscribe(this);
         this.input.subscribe(this);
 
-        // Init audio subsystem
+        this.textureManager.init();
         this.soundsManager.init();
 
         // Setup OpenGL
@@ -169,6 +176,8 @@ public class Engine implements ITick, IInput {
     }
 
     public void terminate() {
+        this.engineEvents.remove();
+        this.textureManager.cleanup();
         this.soundsManager.terminate();
         this.timer.terminate();
         this.renderer.terminate();
@@ -192,13 +201,22 @@ public class Engine implements ITick, IInput {
     /**
      * Renders one frame.
      */
-    public void frame() throws EngineException {
+    public void frame() throws Exception {
+        if (this.reload) {
+            this.logger.log(LogLevel.INFO, "Reloading!");
+
+            // Tell all engine subscribers that they need to reload
+            for (IEngineEvent subscriber: this.engineEvents)
+                subscriber.onReload();
+            this.reload = false;
+        }
+
+        this.display.poll();
         this.profiler.frame();
         this.input.frame();
         this.display.frame();
         this.renderer.frame();
         this.soundsManager.frame();
-        this.display.poll();
     }
 
     public String getGraphicsInfo() {
@@ -208,6 +226,26 @@ public class Engine implements ITick, IInput {
     @Override
     public void tick(Timer timer) {
         this.display.tick(timer);
+    }
+
+    /**
+     * Reload all resources, shaders, etc.
+     * */
+    public void reload() {
+        // Flip the reload variable, so it can be called in the main thread
+        this.reload = true;
+    }
+
+    /**
+     * Subscribe for engine's events
+     * */
+    public void subscribeEngineEvents(IEngineEvent handler) {
+        if (!this.engineEvents.contains(handler))
+            this.engineEvents.add(handler);
+    }
+
+    public void unsubscribeEngineEvents(IEngineEvent handler) {
+        this.engineEvents.remove(handler);
     }
 
     /**

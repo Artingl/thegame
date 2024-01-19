@@ -15,6 +15,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL15C.*;
@@ -212,8 +213,19 @@ public class BaseMesh implements IMesh {
     }
 
     @Override
+    public void reload() {
+        this.makeDirty();
+    }
+
+    @Override
     public void cleanup() {
         synchronized (this.vertices) {
+            // Deactivate the mesh in the mesh manager
+            Engine.getInstance()
+                    .getRenderer()
+                    .getMeshManager()
+                    .deactivateMesh(this);
+
             if (this.vao != -1)
                 glDeleteVertexArrays(vao);
             if (this.vbo != -1)
@@ -301,6 +313,12 @@ public class BaseMesh implements IMesh {
 
             this.isBaked = true;
             this.isDirty = false;
+
+            // Activate the mesh in the mesh manager
+            Engine.getInstance()
+                    .getRenderer()
+                    .getMeshManager()
+                    .activateMesh(this);
         }
     }
 

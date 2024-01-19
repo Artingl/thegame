@@ -90,6 +90,9 @@ public class MeshComponent extends Component {
         if (mesh != null && enableRendering) {
             TransformComponent transform = node.getTransform();
 
+            if (!mesh.isBaked() | mesh.isDirty())
+                mesh.bake();
+
             mesh.transform(transform.getMatrix());
             mesh.render(context);
         }

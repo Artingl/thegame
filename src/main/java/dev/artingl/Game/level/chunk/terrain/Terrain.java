@@ -48,12 +48,12 @@ public interface Terrain {
     default EnvironmentObjects calculateEnvObject(LevelTerrainGenerator generator, float x, float height, float z) {
         int per = Utils.randInt(new Random(generator.getSeed() + ((int)x) * 31L + ((int)z)), -4096, 4096);
         if (getType() == TerrainType.MOUNTAINS)
-            return per >= 0 && per < 2 && height > 20 ? EnvironmentObjects.TREE :
-                    per > 0 && per < 3 ? EnvironmentObjects.ROCK :
-                    per > 14 && per < 32 && height > 20 ? EnvironmentObjects.GRASS : null;
-        return per >= 0 && per < 2 ? EnvironmentObjects.TREE :
-                per > 10 && per < 13 ? EnvironmentObjects.ROCK :
-                per > 14 && per < 32 ? EnvironmentObjects.GRASS : null;
+            return per >= 0 && per < 4 && height > 20 ? EnvironmentObjects.TREE :
+                    per > 0 && per < 13 ? EnvironmentObjects.ROCK :
+                    per > 40 && per < 90 && height > 20 ? EnvironmentObjects.GRASS : null;
+        return per >= 0 && per < 4 ? EnvironmentObjects.TREE :
+                per > 10 && per < 23 ? EnvironmentObjects.ROCK :
+                per > 40 && per < 90 ? EnvironmentObjects.GRASS : null;
     }
 
     /**

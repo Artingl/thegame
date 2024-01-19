@@ -6,6 +6,7 @@ import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.debug.Profiler;
+import dev.artingl.Engine.renderer.mesh.MeshManager;
 import dev.artingl.Engine.renderer.pipeline.IPipeline;
 import dev.artingl.Engine.renderer.pipeline.PipelineManager;
 import dev.artingl.Engine.renderer.postprocessing.Postprocessing;
@@ -29,6 +30,7 @@ public class Renderer {
     private final PipelineManager pipeline;
     private final Viewport viewport;
     private final Postprocessing postprocessing;
+    private final MeshManager meshManager;
     private ShaderProgram programInUse;
     private int vaoInUse;
     private int eboInUse;
@@ -41,6 +43,7 @@ public class Renderer {
         this.viewport = new Viewport(this.logger, this);
         this.pipeline = new PipelineManager(this.logger, this);
         this.postprocessing = new Postprocessing(this.logger);
+        this.meshManager = new MeshManager(this.logger, this);
         this.isWireframeEnabled = false;
 
 //        this.pipeline.append(this.postprocessing);
@@ -78,6 +81,8 @@ public class Renderer {
         int status;
         if ((status = glCheckFramebufferStatus(GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
             throw new EngineException("Bad framebuffer status: " + status);
+
+        this.meshManager.init();
     }
 
     public void terminate() {
@@ -85,6 +90,7 @@ public class Renderer {
         glDeleteTextures(this.renderTexture);
         glDeleteFramebuffers(this.framebuffer);
         this.pipeline.cleanup();
+        this.meshManager.cleanup();
     }
 
     /**
@@ -212,6 +218,10 @@ public class Renderer {
 
     public PipelineManager getPipeline() {
         return pipeline;
+    }
+
+    public MeshManager getMeshManager() {
+        return meshManager;
     }
 
     /**

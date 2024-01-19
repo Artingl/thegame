@@ -1,0 +1,17 @@
+{
+  "material.floor": {
+    "texture_tile": true
+  },
+  "material.wall0.1": {
+    "texture_tile": true,
+	"texture": "thegame:models/shelter/wall"
+  },
+  "material.wall0.2": {
+    "texture_tile": true,
+	"texture": "thegame:models/shelter/wall_bottom"
+  },
+  "material.wall0.3": {
+    "texture_tile": true,
+	"texture": "thegame:models/shelter/wall_bottom"
+  }
+}

@@ -35,9 +35,4 @@ public class PlaneMesh extends BaseMesh {
         return height;
     }
 
-    @Override
-    public void bake() {
-        super.bake();
-    }
-
 }

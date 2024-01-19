@@ -60,9 +60,6 @@ public class GameDirector {
             System.exit(1);
         }
 
-        /* Disable vsync */
-        this.engine.getDisplay().setVsync(false);
-
         /* Add post-processing effects */
 //        this.engine.getRenderer().getPostprocessing().addEffect(new Bloom());
 

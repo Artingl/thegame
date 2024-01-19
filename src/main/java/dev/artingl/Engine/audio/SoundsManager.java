@@ -65,10 +65,10 @@ public class SoundsManager {
             for (SoundSource source : sources) {
                 float cameraDst = position.distance(source.getPosition());
 
+                // TODO: be able to control the distance in settings
                 // TODO: this if statement loops the sound
                 if (!source.isPlaying() && cameraDst < 250)
                     source.play();
-                // TODO: be able to control the distance in settings
                 else if (source.isPlaying() && cameraDst > 250)
                     source.stop();
             }
@@ -88,6 +88,7 @@ public class SoundsManager {
         AL.createCapabilities(deviceCaps);
 
         alDistanceModel(AL11.AL_EXPONENT_DISTANCE_CLAMPED);
+        alListener3f(AL_POSITION, Integer.MAX_VALUE, 0, 0);
     }
 
     public void terminate() {
