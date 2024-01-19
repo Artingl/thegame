@@ -1,0 +1,72 @@
+plugins {
+    id 'java'
+}
+
+group = 'dev.artingl'
+version = '1.0-SNAPSHOT'
+
+project.ext.lwjglVersion = "3.3.2-SNAPSHOT"
+project.ext.jomlVersion = "1.10.2"
+project.ext.imguiVersion = "1.86.11"
+project.ext.natives = "natives-windows"  // "natives-macos"
+
+repositories {
+    mavenCentral()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://repo.spongepowered.org/repository/maven-public/" }
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+
+    implementation 'com.github.oshi:oshi-core:6.4.7'
+
+    implementation "org.lwjgl:lwjgl"
+    implementation "org.lwjgl:lwjgl-glfw"
+    implementation "org.lwjgl:lwjgl-openal"
+    implementation "org.lwjgl:lwjgl-opengl"
+    implementation "org.lwjgl:lwjgl-stb"
+    implementation "org.lwjgl:lwjgl-tinyfd"
+    implementation 'org.jetbrains:annotations:24.0.0'
+    runtimeOnly "org.lwjgl:lwjgl::$natives"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$natives"
+    runtimeOnly "org.lwjgl:lwjgl-openal::$natives"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::$natives"
+    runtimeOnly "org.lwjgl:lwjgl-stb::$natives"
+    runtimeOnly "org.lwjgl:lwjgl-tinyfd::$natives"
+
+    implementation "io.github.spair:imgui-java-binding:$imguiVersion"
+    implementation "io.github.spair:imgui-java-lwjgl3:$imguiVersion"
+    implementation "io.github.spair:imgui-java-$natives:$imguiVersion"
+
+    implementation "org.joml:joml:${jomlVersion}"
+    implementation "org.ode4j:core:0.5.2"
+
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    implementation "org.spongepowered:noise:2.0.0-SNAPSHOT"
+    implementation "de.articdive:jnoise-pipeline:4.1.0"
+    implementation "com.github.mokiat:java-data-front:2.0.1"
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "dev.artingl.Start"
+    }
+}
+
+task fatJar(type: Jar) {
+    manifest.from jar.manifest
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        var f = configurations.runtimeClasspath
+        f.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    with jar
+}
+
+test {
+    useJUnitPlatform()
+}
