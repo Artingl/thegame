@@ -10,13 +10,10 @@ import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import dev.artingl.Engine.renderer.shader.ShaderType;
 import dev.artingl.Engine.renderer.viewport.Viewport;
 import dev.artingl.Engine.resources.Resource;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.system.MemoryStack;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +46,7 @@ public class BaseMesh implements IMesh {
     private int verticesCount;
     private int indicesCount;
     private VerticesBuffer vertices;
-    private Matrix4f model;
+    private Matrix4f modelMatrix;
     private int instancesVBO, vao, vbo, ebo;
     private float meshFade;
     private int mode;
@@ -318,12 +315,12 @@ public class BaseMesh implements IMesh {
 
     @Override
     public Matrix4f getModelMatrix() {
-        return this.model;
+        return this.modelMatrix;
     }
 
     @Override
     public void transform(Matrix4f model) {
-        this.model = model;
+        this.modelMatrix = model;
     }
 
     @Override

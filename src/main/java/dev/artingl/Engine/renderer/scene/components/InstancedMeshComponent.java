@@ -15,6 +15,7 @@ import dev.artingl.Engine.timer.Timer;
 public class InstancedMeshComponent extends MeshComponent {
 
     private int lastTransformsHash = -1;
+    private boolean canBake = false;
 
     public InstancedMeshComponent(IMesh mesh) {
         super(mesh);
@@ -43,6 +44,7 @@ public class InstancedMeshComponent extends MeshComponent {
                         this.mesh.addInstance(instance.getMatrix());
                     this.mesh.bake();
                 }
+
                 this.mesh.renderInstanced(context);
             } else {
                 Engine.getInstance().getLogger().log(LogLevel.WARNING, "Instanced Mesh Renderer can work only with Instanced Transform Component!");

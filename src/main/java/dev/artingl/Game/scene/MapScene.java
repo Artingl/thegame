@@ -1,22 +1,16 @@
 package dev.artingl.Game.scene;
 
-import dev.artingl.Engine.audio.SoundBuffer;
-import dev.artingl.Engine.audio.SoundSource;
 import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.Utils;
-import dev.artingl.Engine.models.BaseModel;
+import dev.artingl.Engine.models.IModel;
 import dev.artingl.Engine.renderer.mesh.ModelMesh;
 import dev.artingl.Engine.renderer.scene.BaseScene;
 import dev.artingl.Engine.renderer.scene.components.ComponentFinalField;
 import dev.artingl.Engine.renderer.scene.components.InstancedMeshComponent;
-import dev.artingl.Engine.renderer.scene.components.RigidBodyComponent;
 import dev.artingl.Engine.renderer.scene.components.collider.TerrainColliderComponent;
 import dev.artingl.Engine.renderer.scene.components.transform.InstancedTransformComponent;
 import dev.artingl.Engine.renderer.scene.components.transform.TransformComponent;
 import dev.artingl.Engine.renderer.scene.nodes.SceneNode;
-import dev.artingl.Engine.renderer.scene.nodes.sprites.SphereNode;
-import dev.artingl.Engine.renderer.scene.nodes.sprites.SpriteNode;
-import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.timer.Timer;
 import dev.artingl.Game.GameDirector;
 import dev.artingl.Game.level.Level;
@@ -107,7 +101,7 @@ public class MapScene extends BaseScene {
                 /* Initialize the node for the object if we haven't yet */
                 if (envNode == null) {
                     envNode = envObjectNodes[objId] = new SceneNode();
-                    BaseModel model = Models.MODELS[objId];
+                    IModel model = Models.MODELS[objId];
                     ModelMesh mesh = new ModelMesh(model);
 
                     // Disable fade animations for trees because it'd look awful

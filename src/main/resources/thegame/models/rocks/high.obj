@@ -1,7 +1,7 @@
 # Blender 4.0.2
 # www.blender.org
 mtllib high.mtl
-o Icosphere.003
+o rock
 v 0.369850 -0.022322 0.209580
 v -0.132865 -0.067334 0.329268
 v -0.403442 -0.075720 -0.040193

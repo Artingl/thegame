@@ -25,6 +25,7 @@ import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL30C.glGenerateMipmap;
 
 public class TextureManager {
+
     private final Logger logger;
     private final Map<Resource, Texture> textures;
 
@@ -57,15 +58,17 @@ public class TextureManager {
 
         // Load missing texture first
         this.textures.put(
-                new Resource("engine", "missing"),
-                loadTexture(new Resource("engine", "textures/missing.jpg")));
+                new Resource("engine", "internal/missing"),
+                loadTexture(new Resource("engine", "textures/internal/missing.jpg")));
 
         // Load all textures
-        try (Stream<Path> walk = Files.walk(directory, 2).filter(Files::isRegularFile)) {
+        try (Stream<Path> walk = Files.walk(directory, 3).filter(Files::isRegularFile)) {
             for (Iterator<Path> it = walk.iterator(); it.hasNext(); ) {
                 // The texture file source
                 Path path = it.next();
-                String fileName = path.getParent().getFileName().toString() + "/" + path.getFileName().toString();
+                Path localPath = path.subpath(directory.getNameCount(), path.getNameCount());
+                String fileName = localPath.subpath(0, localPath.getNameCount() - 1).toString().replace("\\", "/")
+                        + "/" + localPath.getFileName().toString();
                 Resource textureSource = resource.relative(fileName);
 
                 // The resource that will be used later to fetch textures from the map (namespace:texture_file_name)

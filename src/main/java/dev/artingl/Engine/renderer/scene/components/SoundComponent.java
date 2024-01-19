@@ -11,10 +11,16 @@ public class SoundComponent extends Component {
 
     // TODO: control volume thru component interface (in debugger)
 
+    @ComponentFinalField
+    public boolean isPlaying;
+    public float volume;
+
     private final SoundSource source;
 
     public SoundComponent(SoundBuffer buffer) {
         this.source = new SoundSource(buffer, new Vector3f(0, 0, 0));
+        this.volume = 1;
+        this.isPlaying = false;
     }
 
     public SoundSource getSound() {
@@ -43,7 +49,9 @@ public class SoundComponent extends Component {
             if (!source.isPlaying() && node.isEnabled)
                 source.play();
 
-            this.source.setPosition(new Vector3f(node.getTransform().position));
+//            this.source.setPosition(new Vector3f(node.getTransform().position));
+//            this.source.setVolume(this.volume);
+//            this.isPlaying = this.source.isPlaying();
         }
     }
 }

@@ -14,34 +14,78 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.lwjgl.opengl.GL11C.GL_TRIANGLES;
 
-public class OBJModel implements BaseModel {
+public class OBJModel implements IModel {
 
-    private final Resource objModel;
-    private final List<String> objectsToLoad;
-    private final VerticesBuffer[] buffers;
+    private final Resource resource;
+
+    // key is mesh name, buffer array represents quality levels
+    private final Map<String, VerticesBuffer[]> meshes;
+
+    // All available meshes in the model
+    private String[] meshNames;
+
     private final IOBJParser parser;
     private final int mode;
+    private boolean validMesh;
 
-    public OBJModel(Resource model, String... objects) {
-        this(model, GL_TRIANGLES, objects);
+    public OBJModel(Resource model) {
+        this(model, GL_TRIANGLES);
     }
 
-    public OBJModel(Resource model, int mode, String... objects) {
+    public OBJModel(Resource model, int mode) {
+        Engine engine = Engine.getInstance();
+
         this.mode = mode;
         this.parser = new OBJParser();
-        this.buffers = new VerticesBuffer[MeshQuality.values().length-1];
-        this.objectsToLoad = objects.length == 0 ? null : Arrays.asList(objects);
-        this.objModel = model;
+        this.resource = model;
+        this.meshes = new ConcurrentHashMap<>();
+        this.validMesh = true;
+
+        // Parse all mesh names
+        try {
+            Resource resource = this.resource.relative("high.obj");
+            com.mokiat.data.front.parser.OBJModel objModel = parser.parse(resource.load());
+            int i = 0;
+
+            this.meshNames = new String[objModel.getObjects().size()];
+            for (OBJObject object : objModel.getObjects()) {
+                this.meshNames[i++] = object.getName();
+            }
+        } catch (Exception e) {
+            engine.getLogger().exception(e, "Unable to load the model!");
+            this.validMesh = false;
+            return;
+        }
+
+        // Initialize meshes map with all possible names
+        for (String name: this.meshNames) {
+            this.meshes.put(name, new VerticesBuffer[MeshQuality.values().length-1]);
+        }
     }
 
     @Override
-    public VerticesBuffer load(MeshQuality quality) {
-        synchronized (buffers) {
+    public VerticesBuffer load(MeshQuality quality, String meshName) {
+        Logger logger = Engine.getInstance().getLogger();
+        VerticesBuffer[] buffers;
+
+        if (!this.validMesh) {
+            logger.log(LogLevel.WARNING, "Mesh " + meshName + " for model " + resource + " will not be loaded " +
+                    "because the resource is invalid.");
+            return VerticesBuffer.EMPTY;
+        }
+
+        // Check if the mesh name is valid
+        if ((buffers = this.meshes.get(meshName)) == null) {
+            logger.log(LogLevel.WARNING, "Invalid mesh " + meshName + " for model " + resource);
+            return VerticesBuffer.EMPTY;
+        }
+
+        synchronized (meshes) {
             if (quality == MeshQuality.NOT_RENDERED)
                 return VerticesBuffer.EMPTY;
 
@@ -49,7 +93,6 @@ public class OBJModel implements BaseModel {
             if (buffers[bufferId] != null)
                 return buffers[bufferId].fork();
 
-            Logger logger = Engine.getInstance().getLogger();
             VerticesBuffer buffer = new VerticesBuffer(
                     VerticesBuffer.Attribute.VEC3F,
                     VerticesBuffer.Attribute.VEC4F,
@@ -57,9 +100,9 @@ public class OBJModel implements BaseModel {
             );
 
             try {
-                Resource resource = objModel.relative(quality.name().toLowerCase() + ".obj");
+                Resource resource = this.resource.relative(quality.name().toLowerCase() + ".obj");
                 com.mokiat.data.front.parser.OBJModel model = parser.parse(resource.load());
-                this.parseModel(buffer, model);
+                this.parseModel(buffer, model, meshName);
 
                 logger.log(LogLevel.INFO, "OBJ model " + resource +
                         "; quality=" + quality + " info: v=" + model.getVertices().size() +
@@ -71,18 +114,20 @@ public class OBJModel implements BaseModel {
                 buffer = null;
             }
 
+            // Save buffers
             buffers[bufferId] = buffer;
+            this.meshes.put(meshName, buffers);
+
             if (buffer != null)
                 return buffer.fork();
             return null;
         }
     }
 
-    private void parseModel(VerticesBuffer buffer, com.mokiat.data.front.parser.OBJModel model) {
+    private void parseModel(VerticesBuffer buffer, com.mokiat.data.front.parser.OBJModel model, String name) {
         for (OBJObject object : model.getObjects()) {
-            if (objectsToLoad != null)
-                if (!objectsToLoad.contains(object.getName()))
-                    continue;
+            if (!object.getName().equals(name))
+                continue;
 
             for (OBJMesh mesh : object.getMeshes()) {
                 for (OBJFace face : mesh.getFaces()) {
@@ -118,12 +163,29 @@ public class OBJModel implements BaseModel {
 
     @Override
     public Resource getResource() {
-        return objModel;
+        return resource;
     }
 
     @Override
-    public Texture getTexture() {
+    public Texture getTexture(String mesh) {
         TextureManager textureManager = Engine.getInstance().getTextureManager();
-        return textureManager.getTexture(objModel);
+        return textureManager.getTexture(resource.relative(mesh));
+    }
+
+    @Override
+    public void cleanup() {
+        synchronized (meshes) {
+            for (VerticesBuffer[] buffers: this.meshes.values()) {
+                for (int i = 0; i < buffers.length; i++) {
+                    buffers[i].cleanup();
+                    buffers[i] = null;
+                }
+            }
+        }
+    }
+
+    @Override
+    public String[] getMeshNames() {
+        return this.meshNames;
     }
 }
