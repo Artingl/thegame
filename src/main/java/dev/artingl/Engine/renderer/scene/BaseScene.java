@@ -56,7 +56,7 @@ public class BaseScene implements ITick, IInput {
 
         this.world.setGravity(0, 0, -4.8);
 //        this.world.setQuickStepNumIterations(16);
-        this.world.setContactMaxCorrectingVel(16);
+        this.world.setContactMaxCorrectingVel(128);
         this.world.setContactSurfaceLayer(0.001);
         this.world.setCFM(1e-5);
         this.world.setAutoDisableFlag(true);
@@ -322,11 +322,7 @@ public class BaseScene implements ITick, IInput {
         }
 
         float steps = 3 / timer.getTickPerSecond();
-
-        long start = System.currentTimeMillis();
         this.space.collide(null, this::collideCallback);
-//        System.out.println(System.currentTimeMillis() - start);
-
         this.world.quickStep(steps);
         this.contactGroup.empty();
     }

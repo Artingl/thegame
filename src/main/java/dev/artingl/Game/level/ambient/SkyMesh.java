@@ -44,7 +44,7 @@ public class SkyMesh extends SphereMesh {
     private int lastRadius = -1;
 
     public SkyMesh(Sky sky, Level level) {
-        super(256);
+        super(300);
         this.level = level;
         this.sky = sky;
         this.color = Color.BLACK;
@@ -98,6 +98,7 @@ public class SkyMesh extends SphereMesh {
         // Send all necessary info to the shader
         SKY_PROGRAM.use();
         SKY_PROGRAM.updateModelMatrix(getModelMatrix());
+        SKY_PROGRAM.setUniformFloat("currentRadius", getRadius());
         SKY_PROGRAM.setUniformFloat("lightLevel", level.getLightLevel());
         SKY_PROGRAM.setUniformVector3f("skyColor", color.asVector3f());
 
@@ -106,14 +107,14 @@ public class SkyMesh extends SphereMesh {
         viewport.uploadMatrices(SKY_PROGRAM);
 
         // Update the sky mesh if render distance has changed
-        if (iViewport != null) {
-            int rd = (int) (iViewport.getZFar() * 0.5f);
-            if (this.lastRadius != rd) {
-                this.lastRadius = rd;
-                this.setVertices(this.generateSphereVertices(32, 32, this.lastRadius));
-                return;
-            }
-        }
+//        if (iViewport != null) {
+//            int rd = (int) (iViewport.getZFar() * 0.5f);
+//            if (this.lastRadius != rd) {
+//                this.lastRadius = rd;
+//                this.setVertices(this.generateSphereVertices(32, 32, this.lastRadius));
+//                return;
+//            }
+//        }
 
         // Render the mesh
         context.getRenderer().drawCall(Renderer.DrawCall.ARRAYS, getVao(), mode, getVerticesCount());

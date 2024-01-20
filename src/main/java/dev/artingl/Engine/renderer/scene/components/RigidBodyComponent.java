@@ -20,7 +20,7 @@ public class RigidBodyComponent extends Component {
 
     private DBody body;
 
-    private float yOffset = 0;
+    private Vector3f offset = new Vector3f();
     private Vector3f lastPosition;
     private Vector3f lastRotation = new Vector3f();
 
@@ -73,9 +73,9 @@ public class RigidBodyComponent extends Component {
             );
         } else {
             transform.position.set(
-                    body.getPosition().get0(),
-                    body.getPosition().get2() + yOffset,
-                    body.getPosition().get1()
+                    body.getPosition().get0() + this.offset.x,
+                    body.getPosition().get2() + this.offset.y,
+                    body.getPosition().get1() + this.offset.z
             );
         }
 
@@ -166,7 +166,7 @@ public class RigidBodyComponent extends Component {
         return body;
     }
 
-    public void setYOffset(float yOffset) {
-        this.yOffset = yOffset;
+    public void setOffset(Vector3f yOffset) {
+        this.offset = yOffset;
     }
 }

@@ -40,11 +40,11 @@ public class Sky {
     public float getSunRotation() {
         float time = this.level.getLevelTime();
 
-        if (time < Level.SUN_DURATION_TICKS) {
-            return 180 * time / Level.SUN_DURATION_TICKS;
+        if (time < Level.SUN_CYCLE_TICKS) {
+            return 180 * time / Level.SUN_CYCLE_TICKS;
         }
 
-        return 180 + 180 * ((time - Level.SUN_DURATION_TICKS) / Level.MOON_DURATION_TICKS);
+        return 180 + 180 * ((time - Level.SUN_CYCLE_TICKS) / Level.MOON_CYCLE_TICKS);
     }
 
 }

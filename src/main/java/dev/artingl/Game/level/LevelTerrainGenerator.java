@@ -20,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LevelTerrainGenerator {
 
-    public static final float STEP = 4;
-    public static final float SPAWN_RADIUS = 70;
+    public static final float STEP = 2;
+    public static final float SPAWN_RADIUS = 100;
     public static final float RIVER_SIZE = 2;
 
     private final Map<Vector2i, Terrain.TerrainMeta> cachedTerrain;

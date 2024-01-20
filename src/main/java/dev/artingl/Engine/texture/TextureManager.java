@@ -148,7 +148,6 @@ public class TextureManager implements IEngineEvent {
                 String fileName = localPath.subpath(0, localPath.getNameCount() - 1).toString().replace("\\", "/")
                         + "/" + localPath.getFileName().toString();
                 Resource textureSource = resource.relative(fileName);
-                System.out.println(path);
 
                 // The resource that will be used later to fetch textures from the map (namespace:texture_file_name)
                 Resource texture = new Resource(

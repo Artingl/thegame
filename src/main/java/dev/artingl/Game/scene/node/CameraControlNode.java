@@ -6,15 +6,14 @@ import dev.artingl.Engine.input.IInput;
 import dev.artingl.Engine.input.Input;
 import dev.artingl.Engine.input.InputKeys;
 import dev.artingl.Engine.misc.Color;
-import dev.artingl.Engine.misc.Utils;
-import dev.artingl.Engine.misc.noise.PerlinNoise;
 import dev.artingl.Engine.renderer.scene.components.CameraComponent;
 import dev.artingl.Engine.renderer.scene.components.RigidBodyComponent;
+import dev.artingl.Engine.renderer.scene.components.collider.BaseColliderComponent;
 import dev.artingl.Engine.renderer.scene.components.collider.BoxColliderComponent;
+import dev.artingl.Engine.renderer.scene.components.collider.CapsuleColliderComponent;
 import dev.artingl.Engine.renderer.scene.components.transform.TransformComponent;
 import dev.artingl.Engine.renderer.scene.nodes.CameraNode;
 import dev.artingl.Engine.timer.Timer;
-import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -30,10 +29,11 @@ public class CameraControlNode extends CameraNode implements IInput {
 
     // Required for sprinting
     private boolean fovState = false;
+    private boolean isSneaking = false;
 
     private Vector3f oldPosDelta = new Vector3f();
     private Vector2f oldRotDelta = new Vector2f();
-    private final BoxColliderComponent collider;
+    private final CapsuleColliderComponent collider;
     private final RigidBodyComponent rigidBody;
     private boolean onGround;
 
@@ -42,7 +42,7 @@ public class CameraControlNode extends CameraNode implements IInput {
 
         /* Initialize camera collider and rigid body */
         this.rigidBody = new RigidBodyComponent();
-        this.collider = new BoxColliderComponent(new Vector3f(1, 2, 1));
+        this.collider = new CapsuleColliderComponent(1, 2);
         this.rigidBody.enableRotation = false;
         this.rigidBody.enableBody = true;
 
@@ -84,7 +84,8 @@ public class CameraControlNode extends CameraNode implements IInput {
     public void tick(Timer timer) {
         super.tick(timer);
 
-        this.rigidBody.setYOffset(this.collider.length.y);
+        this.collider.height = this.isSneaking ? 1.3f : 2f;
+        this.rigidBody.setOffset(new Vector3f(0, this.collider.height, 0));
 
         /* Some useful refs */
         TransformComponent cameraTransform = getTransform();
@@ -110,27 +111,26 @@ public class CameraControlNode extends CameraNode implements IInput {
             if (input.getKeyboardState(InputKeys.KEY_D).isHeld()) { posDelta.x += movementSpeed; }
 
             /* Sprint */
-            if (input.getKeyboardState(InputKeys.KEY_LEFT_SHIFT).isHeld() && posDelta.z < 0) {
+            if (input.getKeyboardState(InputKeys.KEY_LEFT_SHIFT).isHeld() && !this.isSneaking && posDelta.z < 0) {
                 if (!fovState) {
                     this.smoothFov(this.sprintFov);
                     this.fovState = !this.fovState;
                 }
-                this.movementSpeed = 5;
+                this.movementSpeed = 2.4f;
             }
             else {
                 if (fovState) {
                     this.smoothFov(this.defaultFov);
                     this.fovState = !this.fovState;
                 }
-                this.movementSpeed = 2;
+                this.movementSpeed = 1.6f;
             }
 
             /* Sneak */
-            if (input.getKeyboardState(InputKeys.KEY_LEFT_CONTROL).isHeld()) this.collider.length.y = 1.2f;
-            else this.collider.length.y = 2f;
+            this.isSneaking = input.getKeyboardState(InputKeys.KEY_LEFT_CONTROL).isHeld();
 
             /* Jump */
-            if (input.getKeyboardState(InputKeys.KEY_SPACE).isHeld() && this.onGround) posDelta.y += jumpStrength;
+            if (input.getKeyboardState(InputKeys.KEY_SPACE).isHeld() && this.onGround) posDelta.y += jumpStrength * (this.isSneaking ? 0.5f : 1);
             this.onGround = false;
 
             /* Make new position vector */
@@ -146,9 +146,9 @@ public class CameraControlNode extends CameraNode implements IInput {
             );
             this.rigidBody.addVelocity(0, newPos.y, 0);
             this.rigidBody.setVelocity(
-                    oldPosDelta.x,
+                    oldPosDelta.x * (movementSpeed * (this.isSneaking ? 0.5f : 1)),
                     Math.min(this.rigidBody.getVelocity().y, jumpStrength),
-                    oldPosDelta.z
+                    oldPosDelta.z * (movementSpeed * (this.isSneaking ? 0.5f : 1))
             );
 
             /* Update camera rotation */

@@ -2,6 +2,8 @@ package dev.artingl.Engine.input;
 
 import dev.artingl.Engine.Display;
 import dev.artingl.Engine.Engine;
+import dev.artingl.Engine.timer.ITick;
+import dev.artingl.Engine.timer.Timer;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 
@@ -11,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class Input {
+public class Input implements ITick {
 
     private final State[] kbKeyStates;
     private final State[] msKeyStates;
@@ -35,6 +37,13 @@ public class Input {
 
         Arrays.fill(this.kbKeyStates, State.KEY_RELEASED);
         Arrays.fill(this.msKeyStates, State.KEY_RELEASED);
+    }
+
+    public void init() {
+        Engine.getInstance().getTimer().subscribe(this);}
+
+    public void cleanup() {
+        Engine.getInstance().getTimer().unsubscribe(this);
     }
 
     /**
@@ -170,7 +179,8 @@ public class Input {
         this.eventsStack.add(new InputEvent(InputEventType.MOUSE_MOVE, x, y));
     }
 
-    public void frame() {
+    @Override
+    public void tick(Timer timer) {
         // Make all event calls that were added to the stack by display callbacks
         synchronized (this.eventsStack) {
             for (InputEvent event: this.eventsStack) {

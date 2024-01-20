@@ -95,7 +95,7 @@ public class PipelineManager implements IEngineEvent {
     public void onReload() {
         this.logger.log(LogLevel.INFO, "Reloading all pipeline instances");
 
-        // Cleanup an initialize (they'll initialize themselves on next render pass)
+        // Cleanup all pipeline instances (they'll initialize themselves on next render pass)
         for (PipelineInstance instance : pipelineList) {
             instance.cleanup();
         }

@@ -3,8 +3,6 @@
 #define SUN_COLOR vec3(0.98, 0.58, 0.003)
 #define MOON_COLOR vec3(0.89, 0.89, 0.89)
 
-#define RADIUS 256
-
 #define PI 3.14159265358979323846
 
 layout (location = 0) out vec4 fragColor;
@@ -12,6 +10,7 @@ layout (location = 0) out vec4 fragColor;
 uniform sampler2D texture0;
 uniform float lightLevel;
 uniform vec3 skyColor;
+uniform float currentRadius;
 
 in vec3 fragPosition;
 in vec3 worldPosition;
@@ -97,13 +96,12 @@ void main() {
     starColor *= 1 - lightLevel;
 
     // Calculate color for the sun and moon
-    vec3 sunColor = renderPlanet(30, vec3(RADIUS, 0, 0), SUN_COLOR);
-    vec3 moonColor = renderPlanet(25, vec3(-RADIUS, 0, 0), MOON_COLOR);
+    vec3 sunColor = renderPlanet(30, vec3(currentRadius, 0, 0), SUN_COLOR);
+    vec3 moonColor = renderPlanet(30, vec3(-currentRadius, 0, 0), MOON_COLOR);
     if (sunColor.x != 0 || moonColor.x != 0) {
         starColor = 0;
     }
 
     float light = min(1, lightLevel + 0.1f);
     fragColor = vec4((skyColor * light) + sunColor + moonColor + starColor, 1);
-//    fragColor = vec4(1);
 }

@@ -5,12 +5,13 @@ import dev.artingl.Engine.renderer.scene.components.Component;
 import dev.artingl.Engine.renderer.scene.components.RigidBodyComponent;
 import dev.artingl.Engine.renderer.scene.components.transform.TransformComponent;
 import dev.artingl.Engine.timer.Timer;
+import org.joml.Vector3f;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.internal.DxGeom;
 
 public class BaseColliderComponent extends Component {
 
-    public float yOffset;
+    public Vector3f offset = new Vector3f();
 
     protected Runnable triggerHandler;
     protected boolean isColliderBuilt = false;
@@ -74,9 +75,9 @@ public class BaseColliderComponent extends Component {
                 geometry.setBody(rigidBody.getBody());
             } else {
                 geometry.setPosition(
-                        transform.position.x,
-                        transform.position.z,
-                        transform.position.y + this.yOffset
+                        transform.position.x + this.offset.x,
+                        transform.position.z + this.offset.z,
+                        transform.position.y + this.offset.y
                 );
             }
         }
@@ -88,10 +89,10 @@ public class BaseColliderComponent extends Component {
     }
 
     /**
-     * Set Y offset that would be added when calculating collision with this collider.
-     * Note: If you have rigid body, set the Y offset in the rigid body itself
+     * Set XYZ offset that would be added when calculating collision with this collider.
+     * Note: If you have rigid body, set the XYZ offset in the rigid body itself
      * */
-    public void setYOffset(float offset) {
-        this.yOffset = offset;
+    public void setOffset(Vector3f offset) {
+        this.offset = offset;
     }
 }

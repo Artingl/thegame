@@ -16,17 +16,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Level implements ITick {
 
-    public static final int SUN_DURATION_TICKS = 128 * 2 * 60;
-    public static final int MOON_DURATION_TICKS = 128 * 8 * 60;
-    public static final int DAY_DURATION_TICKS = MOON_DURATION_TICKS + SUN_DURATION_TICKS;
+    public static final int SUN_CYCLE_TICKS = 128 * 12 * 60;
+    public static final int MOON_CYCLE_TICKS = 128 * 25 * 60;
+    public static final int DAY_CYCLE_TICKS = MOON_CYCLE_TICKS + SUN_CYCLE_TICKS;
 
     // Chunks each direction
-    public static final int LEVEL_SIZE = 8; //16;
+    public static final int LEVEL_SIZE = 8;//16;
 
     private final Map<Vector2i, Chunk> chunks;
     private final LevelTerrainGenerator generator;
     private float levelTime;
-    private float timeSpeed = 1;
+    private float timeSpeed = 0;
     private float levelLight;
 
     // Level's ambient
@@ -37,7 +37,7 @@ public class Level implements ITick {
         this.chunks = new ConcurrentHashMap<>();
         this.generator = new LevelTerrainGenerator(this, Utils.randInt(-0xfffff, 0xfffff));
 
-        this.levelTime = SUN_DURATION_TICKS;
+        this.levelTime = SUN_CYCLE_TICKS;
         this.levelLight = 1;
 
         // Fill the level with chunks
@@ -74,20 +74,20 @@ public class Level implements ITick {
     public void tick(Timer timer) {
         levelTime += timeSpeed;
 
-        if (levelTime > DAY_DURATION_TICKS) {
+        if (levelTime > DAY_CYCLE_TICKS) {
             this.levelTime = 0;
             this.levelLight = 1;
         }
 
         // Calculate light level for current time
-        float daySwitchSpeed = 128 * 16;
-        float nightStartTicks = SUN_DURATION_TICKS - daySwitchSpeed + 512;
-        float noonStartTicks = DAY_DURATION_TICKS - daySwitchSpeed;
-        if (levelTime > noonStartTicks) {
-            this.levelLight = Math.min(1, (levelTime - noonStartTicks) / daySwitchSpeed);
+        float daySwitchSpeed = 128 * 100;
+        float sunStartTicks = SUN_CYCLE_TICKS - daySwitchSpeed + 512;
+        float moonStartTicks = DAY_CYCLE_TICKS - daySwitchSpeed;
+        if (levelTime > moonStartTicks) {
+            this.levelLight = Math.min(1, (levelTime - moonStartTicks) / daySwitchSpeed);
         }
-        else if (levelTime > nightStartTicks) {
-            this.levelLight = Math.max(0, 1 - ((levelTime - nightStartTicks) / daySwitchSpeed));
+        else if (levelTime > sunStartTicks) {
+            this.levelLight = Math.max(0, 1 - ((levelTime - sunStartTicks) / daySwitchSpeed));
         }
     }
 

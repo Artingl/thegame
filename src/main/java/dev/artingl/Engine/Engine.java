@@ -152,6 +152,7 @@ public class Engine implements ITick, IInput {
         this.timer.subscribe(this);
         this.input.subscribe(this);
 
+        this.input.init();
         this.textureManager.init();
         this.soundsManager.init();
 
@@ -178,6 +179,7 @@ public class Engine implements ITick, IInput {
     public void terminate() {
         this.engineEvents.remove();
         this.textureManager.cleanup();
+        this.input.cleanup();
         this.soundsManager.terminate();
         this.timer.terminate();
         this.renderer.terminate();
@@ -213,7 +215,6 @@ public class Engine implements ITick, IInput {
 
         this.display.poll();
         this.profiler.frame();
-        this.input.frame();
         this.display.frame();
         this.renderer.frame();
         this.soundsManager.frame();
@@ -244,6 +245,9 @@ public class Engine implements ITick, IInput {
             this.engineEvents.add(handler);
     }
 
+    /**
+     * Unsubscribe for engine's events
+     * */
     public void unsubscribeEngineEvents(IEngineEvent handler) {
         this.engineEvents.remove(handler);
     }
