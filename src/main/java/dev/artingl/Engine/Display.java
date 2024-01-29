@@ -9,6 +9,7 @@ import org.joml.Vector2i;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.system.MemoryStack;
 
+import java.awt.*;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.opengl.GL11C.GL_TRUE;
@@ -33,7 +34,6 @@ public class Display {
     private boolean isFullscreenEnabled = false;
     private boolean isInFocus = true;
     private boolean isCursorCaptured = false;
-    private long lastMousePoll = 0;
 
     private Vector2f mousePosition = new Vector2f();
     private Vector2f lastMousePosition = new Vector2f();
@@ -141,7 +141,6 @@ public class Display {
         });
 
         glfwSetCursorPosCallback(windowId, (window, xpos, ypos) -> {
-            this.lastMousePosition = this.mousePosition;
             this.mousePosition = new Vector2f((float) xpos, (float) ypos);
         });
 
@@ -211,14 +210,6 @@ public class Display {
 
         // Hide/show cursor based on capture status
         glfwSetInputMode(windowId, GLFW_CURSOR, this.isCursorCaptured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-
-        // Poll for mouse only once every 30ms
-        long now = System.currentTimeMillis();
-        Vector2f ms = getMousePosition();
-        if (this.lastMousePoll + 30 < now) {
-            this.lastMousePoll = now;
-            this.input.setMousePosition(ms.x, ms.y);
-        }
     }
 
     public void poll() {
@@ -248,6 +239,7 @@ public class Display {
     }
 
     public void tick(Timer timer) {
+        this.input.setMousePosition(this.mousePosition.x, this.mousePosition.y);
         if (this.isCursorCaptured && isInFocus()) {
             this.mouseDelta = new Vector2f(this.mousePosition).sub(this.lastMousePosition);
             this.lastMousePosition = this.mousePosition;

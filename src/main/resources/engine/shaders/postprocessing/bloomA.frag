@@ -7,7 +7,6 @@ uniform sampler2D framebufferTexture;
 uniform vec3 screenResolution;
 
 in vec3 worldPosition;
-in vec4 color;
 in vec2 uv;
 
 vec4 makeBloom(float lod, vec2 offset, vec2 bCoord) {

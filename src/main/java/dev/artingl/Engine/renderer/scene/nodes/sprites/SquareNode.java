@@ -10,7 +10,7 @@ public class SquareNode extends SpriteNode {
     }
 
     public SquareNode(float width, float height) {
-        this(width, height, Texture.EMPTY);
+        this(width, height, Texture.MISSING);
     }
 
     public SquareNode(float width, float height, Texture texture) {

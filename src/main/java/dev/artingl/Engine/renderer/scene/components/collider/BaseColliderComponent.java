@@ -73,11 +73,12 @@ public class BaseColliderComponent extends Component {
 
             if (rigidBody != null) {
                 geometry.setBody(rigidBody.getBody());
+                geometry.setOffsetPosition(this.offset.x, this.offset.z, this.offset.y);
             } else {
                 geometry.setPosition(
-                        transform.position.x + this.offset.x,
-                        transform.position.z + this.offset.z,
-                        transform.position.y + this.offset.y
+                        transform.position.x,
+                        transform.position.z,
+                        transform.position.y
                 );
             }
         }
@@ -90,7 +91,7 @@ public class BaseColliderComponent extends Component {
 
     /**
      * Set XYZ offset that would be added when calculating collision with this collider.
-     * Note: If you have rigid body, set the XYZ offset in the rigid body itself
+     * Note: The node must have the rigid body component for offset to work
      * */
     public void setOffset(Vector3f offset) {
         this.offset = offset;

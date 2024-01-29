@@ -57,9 +57,9 @@ public class CameraControlNode extends CameraNode implements IInput {
         super.init();
 
         /* Initialize the camera for the 3D space */
-        CameraComponent camera = getComponent(CameraComponent.class);
+        CameraComponent camera = getCamera();
         camera.type = Type.PERSPECTIVE;
-        camera.zFar = 300;
+        camera.zFar = 400;
         camera.backgroundColor = Color.BLACK;
 
         /* Make sure the camera is main on the scene!!! */
@@ -160,7 +160,7 @@ public class CameraControlNode extends CameraNode implements IInput {
     }
 
     public CameraComponent getCamera() {
-        return (CameraComponent) getComponent(CameraComponent.class);
+        return getComponent(CameraComponent.class);
     }
 
     @Override

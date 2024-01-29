@@ -1,5 +1,6 @@
 package dev.artingl.Engine.renderer.mesh;
 
+import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.misc.Color;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
@@ -42,6 +43,11 @@ public class VerticesBuffer {
         this.fields = new ArrayList<>();
         this.indices = new ArrayList<>();
         this.attributes = attributes;
+    }
+
+    @Override
+    public String toString() {
+        return "VerticesBuffer{indices=" + indices.size() + ", fields=" + fields.size() + ", attributes=" + this.attributes.length + "}";
     }
 
     /**
@@ -385,7 +391,7 @@ public class VerticesBuffer {
                         try {
                             result = handler.call();
                         } catch (Exception e) {
-                            throw new RuntimeException(e);
+                            throw new EngineException(e);
                         }
 
                         return result;

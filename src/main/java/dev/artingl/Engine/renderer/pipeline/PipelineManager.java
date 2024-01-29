@@ -91,6 +91,10 @@ public class PipelineManager implements IEngineEvent {
         return this.pipelineList.size();
     }
 
+    public RenderContext getRenderContext() {
+        return renderContext;
+    }
+
     @Override
     public void onReload() {
         this.logger.log(LogLevel.INFO, "Reloading all pipeline instances");

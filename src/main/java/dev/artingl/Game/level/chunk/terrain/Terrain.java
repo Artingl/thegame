@@ -49,11 +49,11 @@ public interface Terrain {
         int per = Utils.randInt(new Random(generator.getSeed() + ((int)x) * 31L + ((int)z)), -4096, 4096);
         if (getType() == TerrainType.MOUNTAINS)
             return per >= 0 && per < 4 && height > 20 ? EnvironmentObjects.TREE :
-                    per > 0 && per < 13 ? EnvironmentObjects.ROCK :
-                    per > 40 && per < 90 && height > 20 ? EnvironmentObjects.GRASS : null;
+                    per > 0 && per < 8 ? EnvironmentObjects.ROCK :
+                    per > 40 && per < 70 && height > 20 ? EnvironmentObjects.GRASS : null;
         return per >= 0 && per < 4 ? EnvironmentObjects.TREE :
-                per > 10 && per < 23 ? EnvironmentObjects.ROCK :
-                per > 40 && per < 90 ? EnvironmentObjects.GRASS : null;
+                per > 10 && per < 18 ? EnvironmentObjects.ROCK :
+                per > 40 && per < 70 ? EnvironmentObjects.GRASS : null;
     }
 
     /**

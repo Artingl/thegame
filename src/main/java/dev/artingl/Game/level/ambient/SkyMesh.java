@@ -107,14 +107,14 @@ public class SkyMesh extends SphereMesh {
         viewport.uploadMatrices(SKY_PROGRAM);
 
         // Update the sky mesh if render distance has changed
-//        if (iViewport != null) {
-//            int rd = (int) (iViewport.getZFar() * 0.5f);
-//            if (this.lastRadius != rd) {
-//                this.lastRadius = rd;
-//                this.setVertices(this.generateSphereVertices(32, 32, this.lastRadius));
-//                return;
-//            }
-//        }
+        if (iViewport != null) {
+            int rd = (int) (iViewport.getZFar() * 0.8f);
+            if (this.lastRadius != rd) {
+                this.lastRadius = rd;
+                this.setVertices(this.generateSphereVertices(32, 32, this.lastRadius));
+                return;
+            }
+        }
 
         // Render the mesh
         context.getRenderer().drawCall(Renderer.DrawCall.ARRAYS, getVao(), mode, getVerticesCount());

@@ -75,8 +75,10 @@ public class BaseMesh implements IMesh {
         this.program = BASE_PROGRAM;
         this.mode = GL_TRIANGLES;
         this.instances = new ArrayList<>();
-        this.vertices = new VerticesBuffer();
         this.enableFadeAnimation = true;
+
+        if (this.vertices == null)
+            this.vertices = new VerticesBuffer();
     }
 
     /**

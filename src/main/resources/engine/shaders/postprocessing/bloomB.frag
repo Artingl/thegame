@@ -9,7 +9,6 @@ uniform sampler2D postprocessingFramebufferTexture;
 uniform vec3 screenResolution;
 
 in vec3 worldPosition;
-in vec4 color;
 in vec2 uv;
 
 vec4 jodieReinhardTonemap(vec4 c) {

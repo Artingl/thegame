@@ -112,7 +112,7 @@ public class TextureManager implements IEngineEvent {
 
     public Texture getTexture(Resource texture) {
         if (!textures.containsKey(texture))
-            return Texture.EMPTY;
+            return Texture.MISSING;
 
         return textures.get(texture);
     }

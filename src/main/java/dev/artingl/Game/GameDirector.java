@@ -2,11 +2,13 @@ package dev.artingl.Game;
 
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.Engine;
+import dev.artingl.Engine.renderer.postprocessing.Bloom;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Game.registries.LevelsRegistry;
 import dev.artingl.Game.scene.MapScene;
 import dev.artingl.Game.registries.ScenesRegistry;
 import dev.artingl.Game.level.Level;
+import dev.artingl.Game.scene.TestScene;
 
 public class GameDirector {
     private static GameDirector instance;
@@ -70,6 +72,10 @@ public class GameDirector {
         /* Register scenes */
         this.sceneRegistry.registerScene(new Resource("thegame", "scene/map"), new MapScene());
         this.sceneRegistry.switchScene(new Resource("thegame", "scene/map"));
+
+        // TODO: fix scene switching
+        this.sceneRegistry.registerScene(new Resource("thegame", "scene/test"), new TestScene());
+        this.sceneRegistry.switchScene(new Resource("thegame", "scene/test"));
     }
 
     public int run() {

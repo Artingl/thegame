@@ -9,9 +9,8 @@ uniform sampler2D postprocessingFramebufferTexture;
 uniform vec3 screenResolution;
 
 in vec3 worldPosition;
-in vec4 color;
 in vec2 uv;
 
 void main() {
-    fragColor = texture(framebufferTexture, uv);
+    fragColor = vec4(1);//texture(texture0, uv);
 }

@@ -9,12 +9,9 @@ uniform mat4 m_view;
 uniform mat4 m_model;
 
 out vec3 worldPosition;
-out vec4 color;
 out vec2 uv;
 
 void main() {
     gl_Position = vec4(in_position, 1.0);
-
-    color = in_color;
     uv = in_uv;
 }

@@ -34,6 +34,7 @@ public class Renderer {
     private ShaderProgram programInUse;
     private int vaoInUse;
     private int eboInUse;
+    private int currentFramebuffer;
     private boolean isWireframeEnabled;
 
     private int renderTexture, framebuffer, depthBuffer;
@@ -61,21 +62,21 @@ public class Renderer {
         this.renderTexture = glGenTextures();
         this.depthBuffer = glGenBuffers();
 
-//        glBindFramebuffer(GL_FRAMEBUFFER, this.framebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, this.framebuffer);
 
-//        glBindTexture(GL_TEXTURE_2D, this.renderTexture);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-//
-//        glBindBuffer(GL_RENDERBUFFER, this.depthBuffer);
-//        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-//        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this.depthBuffer);
-//
-//        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this.renderTexture, 0);
-//        glDrawBuffers(new int[]{GL_COLOR_ATTACHMENT0});
+        glBindTexture(GL_TEXTURE_2D, this.renderTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+        glBindBuffer(GL_RENDERBUFFER, this.depthBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this.depthBuffer);
+
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this.renderTexture, 0);
+        glDrawBuffers(new int[]{GL_COLOR_ATTACHMENT0});
 
         // Check framebuffer
         int status;
@@ -103,7 +104,7 @@ public class Renderer {
         this.pipeline.append(instance);
 
         // Move postprocessing instance to the end of the pipeline
-//        this.pipeline.makeLast(this.postprocessing);
+        this.pipeline.makeLast(this.postprocessing);
 
         // If debugger is enabled move it to the end of the pipeline so it will render on top of everything
         // TODO: BAD
@@ -143,11 +144,19 @@ public class Renderer {
     }
 
     public void bindFramebuffer(int id) {
+        if (this.currentFramebuffer == id)
+            return;
+
         Display display = Engine.getInstance().getDisplay();
-//        glBindFramebuffer(GL_FRAMEBUFFER, id);
+        this.currentFramebuffer = id;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);//id);
         glViewport(0, 0, display.getWidth(), display.getHeight());
 
         Engine.getInstance().getProfiler().incCounter(Profiler.Task.FRAMEBUFFER_BINDS);
+    }
+
+    public int getCurrentFramebuffer() {
+        return currentFramebuffer;
     }
 
     public void drawCall(DrawCall type, int array, int mode, int count) {

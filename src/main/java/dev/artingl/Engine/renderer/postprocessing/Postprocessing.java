@@ -5,6 +5,7 @@ import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.BaseMesh;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Engine.renderer.pipeline.IPipeline;
@@ -13,9 +14,9 @@ import dev.artingl.Engine.renderer.shader.Shader;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import dev.artingl.Engine.renderer.shader.ShaderType;
 import dev.artingl.Engine.resources.Resource;
+import dev.artingl.Engine.texture.Texture;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,7 @@ public class Postprocessing implements IPipeline {
 
     public void render(RenderContext renderContext, ShaderProgram shaderProgram) {
         this.screenMesh.setShaderProgram(shaderProgram);
+        shaderProgram.setMainTexture(Texture.MISSING);
         this.screenMesh.render(renderContext, GL_QUADS);
     }
 
@@ -77,7 +79,6 @@ public class Postprocessing implements IPipeline {
         }
 
         this.effects.clear();
-
         this.screenMesh.cleanup();
         this.postprocessingShader.cleanup();
 
@@ -89,11 +90,11 @@ public class Postprocessing implements IPipeline {
     public void pipelineInit(PipelineInstance instance) throws EngineException {
         this.screenMesh = new BaseMesh(
                 new Vector3f(), new Vector3f(),
-                new VerticesBuffer(VerticesBuffer.Attribute.VEC3F, VerticesBuffer.Attribute.VEC4F, VerticesBuffer.Attribute.VEC2F)
-                        .addAttribute(new Vector3f(-1.0f, -1.0f, 0.0f)).addAttribute(new Vector4f(1, 1, 1, 1)).addAttribute(new Vector2f(0, 0))
-                        .addAttribute(new Vector3f(1.0f, -1.0f, 0.0f)).addAttribute(new Vector4f(1, 1, 1, 1)).addAttribute(new Vector2f(1, 0))
-                        .addAttribute(new Vector3f(1.0f, 1.0f, 0.0f)).addAttribute(new Vector4f(1, 1, 1, 1)).addAttribute(new Vector2f(1, 1))
-                        .addAttribute(new Vector3f(-1.0f, 1.0f, 0.0f)).addAttribute(new Vector4f(1, 1, 1, 1)).addAttribute(new Vector2f(0, 1))
+                new VerticesBuffer(VerticesBuffer.Attribute.VEC3F, VerticesBuffer.Attribute.VEC2F)
+                        .addAttribute(new Vector3f(-1.0f, -1.0f, 0.0f)).addAttribute(new Vector2f(0, 0))
+                        .addAttribute(new Vector3f(1.0f, -1.0f, 0.0f)).addAttribute(new Vector2f(1, 0))
+                        .addAttribute(new Vector3f(1.0f, 1.0f, 0.0f)).addAttribute(new Vector2f(1, 1))
+                        .addAttribute(new Vector3f(-1.0f, 1.0f, 0.0f)).addAttribute(new Vector2f(0, 1))
         );
         this.screenMesh.bake();
 

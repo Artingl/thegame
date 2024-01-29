@@ -277,24 +277,6 @@ public class BaseScene implements ITick, IInput {
      */
     protected String makeNametag(SceneNode target) {
         return target.getClass().getSimpleName() + "(" + target.getUUID() + ")";
-//        String className = target.getClass().getSimpleName();
-//        int idx = 0;
-//
-//        do {
-//            boolean foundDuplicate = false;
-//
-//            for (SceneNode node: nodesList.values()) {
-//                if (node.getNametag().equals(className + idx)) {
-//                    idx++;
-//                    foundDuplicate = true;
-//                    break;
-//                }
-//            }
-//
-//            if (!foundDuplicate)
-//                return className + idx;
-//        }
-//        while (true);
     }
 
     /**
@@ -320,6 +302,10 @@ public class BaseScene implements ITick, IInput {
             }
             this.spaceCallbacks.clear();
         }
+
+        // Call tick for each node
+        for (SceneNode node: nodesList.values())
+            node.tick(timer);
 
         float steps = 3 / timer.getTickPerSecond();
         this.space.collide(null, this::collideCallback);

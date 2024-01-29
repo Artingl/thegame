@@ -264,10 +264,6 @@ public class SceneNode implements ITick {
         for (Component component: getComponents()) {
             component.init(this);
         }
-
-        /* Subscribe to tick events */
-        Timer timer = this.getScene().getEngine().getTimer();
-        timer.subscribe(this);
     }
 
     /**
@@ -277,10 +273,6 @@ public class SceneNode implements ITick {
         for (Component component: getComponents()) {
             component.cleanup();
         }
-
-        /* Unsubscribe from tick events */
-        Timer timer = this.getScene().getEngine().getTimer();
-        timer.subscribe(this);
     }
 
     /**
@@ -297,8 +289,10 @@ public class SceneNode implements ITick {
         if (parent != null && !parent.isEnabled)
             return;
 
-        for (Component component: components) {
-            component.tick(timer);
+        for (Component component : components) {
+            // Check if node is initialized
+            if (component.getNode() != null)
+                component.tick(timer);
         }
     }
 

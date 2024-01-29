@@ -1,10 +1,6 @@
 package dev.artingl.Engine.audio;
 
-import dev.artingl.Engine.EngineException;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
-
-import java.io.IOException;
 
 import static org.lwjgl.openal.AL10.*;
 

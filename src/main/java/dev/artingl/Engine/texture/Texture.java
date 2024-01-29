@@ -2,11 +2,10 @@ package dev.artingl.Engine.texture;
 
 import static org.lwjgl.opengl.GL11.GL_CLAMP;
 import static org.lwjgl.opengl.GL11C.*;
-import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 
 public class Texture {
 
-    public static final Texture EMPTY = new Texture(1);
+    public static final Texture MISSING = new Texture(1);
 
     private final int textureId;
     private boolean isTiled;
