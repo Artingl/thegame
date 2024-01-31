@@ -1,11 +1,8 @@
 package dev.artingl.Game.scene.node;
 
 import dev.artingl.Engine.renderer.mesh.ModelMesh;
-import dev.artingl.Engine.renderer.scene.components.RigidBodyComponent;
-import dev.artingl.Engine.renderer.scene.components.collider.BoxColliderComponent;
-import dev.artingl.Engine.renderer.scene.nodes.sprites.SpriteNode;
+import dev.artingl.Engine.scene.nodes.sprites.SpriteNode;
 import dev.artingl.Game.scene.Models;
-import org.joml.Vector3f;
 
 public class ShelterNode extends SpriteNode {
 

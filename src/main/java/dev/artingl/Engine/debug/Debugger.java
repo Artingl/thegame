@@ -1,10 +1,10 @@
 package dev.artingl.Engine.debug;
 
-import dev.artingl.Engine.renderer.scene.components.ComponentFinalField;
-import dev.artingl.Engine.renderer.scene.components.ComponentIgnoreField;
-import dev.artingl.Engine.renderer.scene.components.ComponentInformation;
+import dev.artingl.Engine.scene.SceneManager;
+import dev.artingl.Engine.scene.components.ComponentFinalField;
+import dev.artingl.Engine.scene.components.ComponentIgnoreField;
+import dev.artingl.Engine.scene.components.ComponentInformation;
 import dev.artingl.Engine.resources.Options;
-import dev.artingl.Game.GameDirector;
 import dev.artingl.Engine.Display;
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.misc.Color;
@@ -14,17 +14,16 @@ import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.IMesh;
 import dev.artingl.Engine.renderer.pipeline.IPipeline;
 import dev.artingl.Engine.renderer.pipeline.PipelineInstance;
-import dev.artingl.Engine.renderer.scene.BaseScene;
-import dev.artingl.Engine.renderer.scene.components.Component;
-import dev.artingl.Engine.renderer.scene.nodes.CameraNode;
-import dev.artingl.Engine.renderer.scene.nodes.SceneNode;
-import dev.artingl.Engine.renderer.scene.nodes.sprites.SquareNode;
+import dev.artingl.Engine.scene.BaseScene;
+import dev.artingl.Engine.scene.components.Component;
+import dev.artingl.Engine.scene.nodes.CameraNode;
+import dev.artingl.Engine.scene.nodes.SceneNode;
+import dev.artingl.Engine.scene.nodes.sprites.SquareNode;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.texture.TextureManager;
 import dev.artingl.Engine.timer.Timer;
 import dev.artingl.Engine.ui.FontAwesomeIcons;
-import dev.artingl.Game.registries.ScenesRegistry;
 import imgui.ImFontGlyphRangesBuilder;
 import imgui.ImGui;
 import imgui.ImGuiIO;
@@ -97,7 +96,6 @@ public class Debugger implements IPipeline {
         ImGui.newFrame();
         ImGuizmo.beginFrame();
 
-        GameDirector director = GameDirector.getInstance();
         Engine engine = Engine.getInstance();
         Renderer renderer = engine.getRenderer();
         TextureManager textureManager = engine.getTextureManager();
@@ -105,7 +103,7 @@ public class Debugger implements IPipeline {
         Timer timer = engine.getTimer();
         Display display = engine.getDisplay();
 
-        ScenesRegistry sceneRegistry = director.getSceneManager();
+        SceneManager sceneRegistry = engine.getSceneManager();
         BaseScene currentScene = sceneRegistry.getCurrentScene();
 
         DWorld world = currentScene.getWorld();

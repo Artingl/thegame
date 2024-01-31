@@ -1,5 +1,6 @@
 package dev.artingl.Engine.audio;
 
+import dev.artingl.Engine.misc.world.Dimension;
 import org.joml.Vector3f;
 
 import static org.lwjgl.openal.AL10.*;
@@ -7,14 +8,22 @@ import static org.lwjgl.openal.AL10.*;
 public class SoundSource {
 
     private final SoundBuffer buffer;
+    private Dimension dimension;
     private Vector3f position;
     private int sourceId;
 
-    public SoundSource(SoundBuffer buffer, Vector3f position) {
+    public SoundSource(SoundBuffer buffer, Dimension dimension, Vector3f position) {
         this.buffer = buffer;
+        this.dimension = dimension;
         this.position = position;
         this.sourceId = -1;
+    }
 
+    /**
+     * Change sound's dimension
+     * */
+    public void setDimension(Dimension dimension) {
+        this.dimension = dimension;
     }
 
     /**
@@ -61,6 +70,13 @@ public class SoundSource {
      * */
     public Vector3f getPosition() {
         return position;
+    }
+
+    /**
+     * Get sound's dimension
+     * */
+    public Dimension getDimension() {
+        return dimension;
     }
 
     /**

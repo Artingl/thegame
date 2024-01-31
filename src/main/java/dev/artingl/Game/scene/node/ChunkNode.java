@@ -1,8 +1,8 @@
 package dev.artingl.Game.scene.node;
 
 import dev.artingl.Engine.renderer.RenderContext;
-import dev.artingl.Engine.renderer.scene.components.MeshComponent;
-import dev.artingl.Engine.renderer.scene.nodes.SceneNode;
+import dev.artingl.Engine.scene.components.MeshComponent;
+import dev.artingl.Engine.scene.nodes.SceneNode;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Game.level.chunk.Chunk;
 import org.joml.FrustumIntersection;

@@ -4,29 +4,23 @@ import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.models.IModel;
 import dev.artingl.Engine.renderer.mesh.ModelMesh;
-import dev.artingl.Engine.renderer.scene.BaseScene;
-import dev.artingl.Engine.renderer.scene.components.ComponentFinalField;
-import dev.artingl.Engine.renderer.scene.components.InstancedMeshComponent;
-import dev.artingl.Engine.renderer.scene.components.RigidBodyComponent;
-import dev.artingl.Engine.renderer.scene.components.collider.BoxColliderComponent;
-import dev.artingl.Engine.renderer.scene.components.collider.TerrainColliderComponent;
-import dev.artingl.Engine.renderer.scene.components.transform.InstancedTransformComponent;
-import dev.artingl.Engine.renderer.scene.components.transform.TransformComponent;
-import dev.artingl.Engine.renderer.scene.nodes.SceneNode;
-import dev.artingl.Engine.renderer.scene.nodes.sprites.BoxNode;
-import dev.artingl.Engine.renderer.scene.nodes.sprites.SphereNode;
+import dev.artingl.Engine.scene.BaseScene;
+import dev.artingl.Engine.scene.components.ComponentFinalField;
+import dev.artingl.Engine.scene.components.InstancedMeshComponent;
+import dev.artingl.Engine.scene.components.collider.TerrainColliderComponent;
+import dev.artingl.Engine.scene.components.transform.InstancedTransformComponent;
+import dev.artingl.Engine.scene.components.transform.TransformComponent;
+import dev.artingl.Engine.scene.nodes.SceneNode;
 import dev.artingl.Engine.timer.Timer;
 import dev.artingl.Game.GameDirector;
 import dev.artingl.Game.level.Level;
 import dev.artingl.Game.level.chunk.Chunk;
 import dev.artingl.Game.level.chunk.environment.EnvironmentObjects;
 import dev.artingl.Game.scene.node.*;
-import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import oshi.util.tuples.Pair;
-import oshi.util.tuples.Triplet;
 
 import java.util.Collection;
 
@@ -54,7 +48,7 @@ public class MapScene extends BaseScene {
         this.cameraController.captureControl = false;
 
         TransformComponent transform = this.cameraController.getTransform();
-        transform.position = new Vector3f(13, 47, 47);
+        transform.position = new Vector3f(13, 27, 47);
         transform.rotation = new Vector3f(60, -18, 0);
 
         this.addNode(this.cameraController);
@@ -73,7 +67,7 @@ public class MapScene extends BaseScene {
         this.makeEnvironment();
         this.makeTerrainCollider();
 
-        getEngine().getSoundsManager().setGlobalVolume(0.3f);
+        getEngine().getSoundsManager().setGlobalVolume(1f);
     }
 
     public void makeEnvironment() {

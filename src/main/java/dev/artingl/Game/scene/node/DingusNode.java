@@ -2,9 +2,8 @@ package dev.artingl.Game.scene.node;
 
 import dev.artingl.Engine.audio.SoundBuffer;
 import dev.artingl.Engine.renderer.mesh.ModelMesh;
-import dev.artingl.Engine.renderer.scene.components.SoundComponent;
-import dev.artingl.Engine.renderer.scene.components.collider.MeshColliderComponent;
-import dev.artingl.Engine.renderer.scene.nodes.sprites.SpriteNode;
+import dev.artingl.Engine.scene.components.SoundComponent;
+import dev.artingl.Engine.scene.nodes.sprites.SpriteNode;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Game.scene.Models;
 

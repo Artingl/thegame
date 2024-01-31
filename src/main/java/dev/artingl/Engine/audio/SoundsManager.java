@@ -4,8 +4,10 @@ import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
+import dev.artingl.Engine.misc.world.Dimension;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.renderer.viewport.Viewport;
+import dev.artingl.Engine.scene.BaseScene;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.openal.*;
@@ -61,9 +63,22 @@ public class SoundsManager {
             alListener3f(AL_VELOCITY, 0, 0, 0);
             alListenerfv(AL_ORIENTATION, makeOrientation(viewport.getView()));
 
+            // Check if we have any scene set, otherwise don't play sound at all
+            BaseScene currentScene = engine.getSceneManager().getCurrentScene();
+            if (currentScene == null)
+                return;
+
+            Dimension currentDimension = currentScene.getDimension();
+
             // Stop sounds which are too far away and play those which are close
             for (SoundSource source : sources) {
                 float cameraDst = position.distance(source.getPosition());
+
+                // Stop the source if the current dimension is not the same as the one set in the source
+                if (!source.getDimension().equals(currentDimension) && source.isPlaying()) {
+                    source.stop();
+                    continue;
+                }
 
                 // TODO: be able to control the distance in settings
                 // TODO: this if statement loops the sound

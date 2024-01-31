@@ -1,6 +1,8 @@
 package dev.artingl.Game.level;
 
+import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.misc.Utils;
+import dev.artingl.Engine.scene.BaseScene;
 import dev.artingl.Engine.timer.ITick;
 import dev.artingl.Engine.timer.Timer;
 import dev.artingl.Game.GameDirector;
@@ -123,7 +125,11 @@ public class Level implements ITick {
      * TODO: make player class so the level wont need to serve this kind of information
      * */
     public Vector3f getPlayerPosition() {
-        return GameDirector.getInstance().getSceneManager().getCurrentScene().getMainCamera().getPosition();
+        BaseScene scene = Engine.getInstance().getSceneManager().getCurrentScene();
+        if (scene == null)
+            return new Vector3f();
+
+        return scene.getMainCamera().getPosition();
     }
 
     /**

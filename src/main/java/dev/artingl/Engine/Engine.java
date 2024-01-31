@@ -13,7 +13,7 @@ import dev.artingl.Engine.resources.Options;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.texture.TextureManager;
 import dev.artingl.Engine.threading.ThreadsManager;
-import dev.artingl.Engine.renderer.scene.SceneManager;
+import dev.artingl.Engine.scene.SceneManager;
 import dev.artingl.Engine.timer.ITick;
 import dev.artingl.Engine.timer.Timer;
 import org.lwjgl.glfw.GLFWErrorCallback;

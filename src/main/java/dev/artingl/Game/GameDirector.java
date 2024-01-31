@@ -2,13 +2,12 @@ package dev.artingl.Game;
 
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.Engine;
-import dev.artingl.Engine.renderer.postprocessing.Bloom;
 import dev.artingl.Engine.resources.Resource;
+import dev.artingl.Engine.scene.SceneManager;
 import dev.artingl.Game.registries.LevelsRegistry;
 import dev.artingl.Game.scene.MapScene;
-import dev.artingl.Game.registries.ScenesRegistry;
 import dev.artingl.Game.level.Level;
-import dev.artingl.Game.scene.TestScene;
+import dev.artingl.Game.scene.MainMenuScene;
 
 public class GameDirector {
     private static GameDirector instance;
@@ -24,7 +23,6 @@ public class GameDirector {
     // ---------------
 
     // Game
-    private final ScenesRegistry sceneRegistry;
     private final LevelsRegistry levelsRegistry;
 
     // ---------------
@@ -42,7 +40,6 @@ public class GameDirector {
 
         /* Initialize game related classes */
         this.levelsRegistry = new LevelsRegistry();
-        this.sceneRegistry = new ScenesRegistry();
 
         /* Replace System.err and System.out with our logger */
         System.setOut(this.logger);
@@ -70,12 +67,13 @@ public class GameDirector {
         this.levelsRegistry.switchLevel(new Resource("thegame", "level/park"));
 
         /* Register scenes */
-        this.sceneRegistry.registerScene(new Resource("thegame", "scene/map"), new MapScene());
-        this.sceneRegistry.switchScene(new Resource("thegame", "scene/map"));
+        SceneManager sceneManager = engine.getSceneManager();
 
-        // TODO: fix scene switching
-        this.sceneRegistry.registerScene(new Resource("thegame", "scene/test"), new TestScene());
-        this.sceneRegistry.switchScene(new Resource("thegame", "scene/test"));
+        sceneManager.registerScene(new Resource("thegame", "scene/map"), new MapScene());
+        sceneManager.switchScene(new Resource("thegame", "scene/map"));
+
+        sceneManager.registerScene(new Resource("thegame", "scene/main_menu"), new MainMenuScene());
+//        sceneManager.switchScene(new Resource("thegame", "scene/main_menu"));
     }
 
     public int run() {
@@ -112,10 +110,6 @@ public class GameDirector {
 
     public Logger getLogger() {
         return logger;
-    }
-
-    public ScenesRegistry getSceneManager() {
-        return sceneRegistry;
     }
 
     public LevelsRegistry getLevelsRegistry() {
