@@ -3,7 +3,7 @@ package dev.artingl.Game;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.resources.Resource;
-import dev.artingl.Engine.scene.SceneManager;
+import dev.artingl.Engine.world.scene.SceneManager;
 import dev.artingl.Game.registries.LevelsRegistry;
 import dev.artingl.Game.scene.MapScene;
 import dev.artingl.Game.level.Level;
@@ -58,6 +58,8 @@ public class GameDirector {
             logger.exception(e, "Got critical error!");
             System.exit(1);
         }
+
+        this.engine.getDisplay().setVsync(false);
 
         /* Add post-processing effects */
 //        this.engine.getRenderer().getPostprocessing().addEffect(new Bloom());

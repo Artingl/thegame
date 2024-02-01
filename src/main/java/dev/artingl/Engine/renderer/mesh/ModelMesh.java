@@ -2,11 +2,11 @@ package dev.artingl.Engine.renderer.mesh;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.debug.LogLevel;
-import dev.artingl.Engine.models.IModel;
-import dev.artingl.Engine.models.ModelProperties;
+import dev.artingl.Engine.renderer.models.IModel;
+import dev.artingl.Engine.renderer.models.ModelProperties;
 import dev.artingl.Engine.renderer.RenderContext;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
-import dev.artingl.Engine.texture.Texture;
+import dev.artingl.Engine.resources.texture.Texture;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
@@ -338,5 +338,11 @@ public class ModelMesh implements IMesh {
     public void reload() {
         this.model.cleanup();
         this.makeDirty();
+    }
+
+    @Override
+    public VerticesBuffer getBuffer() {
+        Engine.getInstance().getLogger().log(LogLevel.UNIMPLEMENTED, "ModelMesh cannot return VerticesBuffer in getBuffer method.");
+        return null;
     }
 }

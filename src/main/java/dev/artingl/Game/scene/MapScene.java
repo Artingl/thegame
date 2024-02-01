@@ -2,16 +2,19 @@ package dev.artingl.Game.scene;
 
 import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.Utils;
-import dev.artingl.Engine.models.IModel;
+import dev.artingl.Engine.renderer.models.IModel;
 import dev.artingl.Engine.renderer.mesh.ModelMesh;
-import dev.artingl.Engine.scene.BaseScene;
-import dev.artingl.Engine.scene.components.ComponentFinalField;
-import dev.artingl.Engine.scene.components.InstancedMeshComponent;
-import dev.artingl.Engine.scene.components.collider.TerrainColliderComponent;
-import dev.artingl.Engine.scene.components.transform.InstancedTransformComponent;
-import dev.artingl.Engine.scene.components.transform.TransformComponent;
-import dev.artingl.Engine.scene.nodes.SceneNode;
+import dev.artingl.Engine.world.scene.BaseScene;
+import dev.artingl.Engine.world.scene.components.annotations.ComponentFinalField;
+import dev.artingl.Engine.world.scene.components.InstancedMeshComponent;
+import dev.artingl.Engine.world.scene.components.phys.RigidBodyComponent;
+import dev.artingl.Engine.world.scene.components.phys.collider.SphereColliderComponent;
+import dev.artingl.Engine.world.scene.components.phys.collider.TerrainColliderComponent;
+import dev.artingl.Engine.world.scene.components.transform.InstancedTransformComponent;
+import dev.artingl.Engine.world.scene.components.transform.TransformComponent;
+import dev.artingl.Engine.world.scene.nodes.SceneNode;
 import dev.artingl.Engine.timer.Timer;
+import dev.artingl.Engine.world.scene.nodes.sprites.SphereNode;
 import dev.artingl.Game.GameDirector;
 import dev.artingl.Game.level.Level;
 import dev.artingl.Game.level.chunk.Chunk;
@@ -39,6 +42,8 @@ public class MapScene extends BaseScene {
     private final ShelterNode shelterNode;
     private final DingusNode dingusNode;
 
+    private final SphereNode sphere;
+
     public MapScene() {
         Level level = getLevel();
 
@@ -48,8 +53,8 @@ public class MapScene extends BaseScene {
         this.cameraController.captureControl = false;
 
         TransformComponent transform = this.cameraController.getTransform();
-        transform.position = new Vector3f(13, 27, 47);
-        transform.rotation = new Vector3f(60, -18, 0);
+        transform.position = new Vector3f(0, 10, 50);
+//        transform.rotation = new Vector3f(60, -18, 0);
 
         this.addNode(this.cameraController);
         this.addNode(this.sky);
@@ -62,10 +67,17 @@ public class MapScene extends BaseScene {
         // Dingus
         this.dingusNode = new DingusNode();
         this.dingusNode.getTransform().position.y = 1.8f;
-        this.addNode(dingusNode);
+//        this.addNode(dingusNode);
 
         this.makeEnvironment();
-        this.makeTerrainCollider();
+
+        this.sphere = new SphereNode(1);
+        this.sphere.getTransform().position.x = 5;
+        this.sphere.getTransform().position.y = 20;
+        this.sphere.getTransform().position.z = 5;
+        this.sphere.addComponent(new SphereColliderComponent(1));
+        this.sphere.addComponent(new RigidBodyComponent());
+        this.addNode(sphere);
 
         getEngine().getSoundsManager().setGlobalVolume(1f);
     }
@@ -117,32 +129,6 @@ public class MapScene extends BaseScene {
                 transform.addInstanceTransform(position, rotation, new Vector3f(1));
             }
         }
-    }
-
-    public void makeTerrainCollider() {
-        /* Make node for the terrain (better for performance than making individual
-         * terrain colliders for each chunk) and create add terrain collider for it. */
-        int size = Chunk.CHUNK_SIZE * Level.LEVEL_SIZE;
-        SceneNode terrainCollider = new SceneNode();
-        TerrainColliderComponent collider = new TerrainColliderComponent(
-                size * 2, size * 2, false,
-                (x, z) -> {
-                    Level level = getLevel();
-                    Vector2f worldPosition = new Vector2f(x, z);
-                    Chunk chunk = level.getChunk(new Vector2i((int) worldPosition.x / Chunk.CHUNK_SIZE, (int) worldPosition.y / Chunk.CHUNK_SIZE));
-
-                    if (chunk == null) {
-                        // Invalid chunk
-                        return 0;
-                    }
-
-                    return level.getGenerator().generateTerrain(chunk, x, z).getHeight();
-                }
-        );
-
-//        terrainCollider.getTransform().position.set(-size, 0, -size);
-        terrainCollider.addComponent(collider);
-        this.addNode(terrainCollider);
     }
 
     @Override

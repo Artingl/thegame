@@ -33,6 +33,13 @@ public class Chunk {
     }
 
     /**
+     * Get chunk's level
+     * */
+    public Level getLevel() {
+        return level;
+    }
+
+    /**
      * Get list of all environment objects in the chunk.
      *
      * @return Collection of pairs, which represents each environment object and it's co-ordinates

@@ -1,6 +1,6 @@
 package dev.artingl.Game.scene;
 
-import dev.artingl.Engine.models.OBJModel;
+import dev.artingl.Engine.renderer.models.OBJModel;
 import dev.artingl.Engine.resources.Resource;
 
 public class Models {

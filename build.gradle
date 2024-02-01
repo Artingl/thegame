@@ -6,10 +6,11 @@ plugins {
 group = 'dev.artingl'
 version = '1.0-SNAPSHOT'
 
+project.ext.jmeVersion = '[3.1,)'
 project.ext.lwjglVersion = "3.3.2-SNAPSHOT"
+project.ext.lwjglNatives = "natives-windows"  // "natives-macos"
 project.ext.jomlVersion = "1.10.2"
 project.ext.imguiVersion = "1.86.11"
-project.ext.natives = "natives-windows"  // "natives-macos"
 
 repositories {
     mavenCentral()
@@ -37,20 +38,19 @@ dependencies {
     implementation "org.lwjgl:lwjgl-stb"
     implementation "org.lwjgl:lwjgl-tinyfd"
     implementation 'org.jetbrains:annotations:24.0.0'
-    runtimeOnly "org.lwjgl:lwjgl::$natives"
-    runtimeOnly "org.lwjgl:lwjgl-glfw::$natives"
-    runtimeOnly "org.lwjgl:lwjgl-openal::$natives"
-    runtimeOnly "org.lwjgl:lwjgl-opengl::$natives"
-    runtimeOnly "org.lwjgl:lwjgl-stb::$natives"
-    runtimeOnly "org.lwjgl:lwjgl-tinyfd::$natives"
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-tinyfd::$lwjglNatives"
 
     implementation 'li.cil.sedna:sedna:2.0.8'
     implementation "io.github.spair:imgui-java-binding:$imguiVersion"
     implementation "io.github.spair:imgui-java-lwjgl3:$imguiVersion"
-    implementation "io.github.spair:imgui-java-$natives:$imguiVersion"
+    implementation "io.github.spair:imgui-java-$lwjglNatives:$imguiVersion"
 
     implementation "org.joml:joml:${jomlVersion}"
-    implementation "org.ode4j:core:0.5.2"
 
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -58,6 +58,9 @@ dependencies {
     implementation "org.spongepowered:noise:2.0.0-SNAPSHOT"
     implementation "de.articdive:jnoise-pipeline:4.1.0"
     implementation "com.github.mokiat:java-data-front:2.0.1"
+
+    implementation "org.jmonkeyengine:jme3-bullet:$jmeVersion"
+    runtimeOnly "org.jmonkeyengine:jme3-bullet-native:$jmeVersion"
 
     implementation 'org.json:json:20231013'
 }

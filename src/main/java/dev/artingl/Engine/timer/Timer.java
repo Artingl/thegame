@@ -38,7 +38,7 @@ public class Timer {
     private float passedTime = 0.0F;
     private boolean isRunning;
     private boolean isTimerStopped = true;
-    private final Collection<ITick> subscribers;
+    private final Collection<TickListener> subscribers;
 
     public Timer(float tickPerSecond) {
         this.tickPerSecond = tickPerSecond;
@@ -49,12 +49,12 @@ public class Timer {
         return tickPerSecond;
     }
 
-    public void subscribe(ITick tick) {
+    public void subscribe(TickListener tick) {
         if (!this.subscribers.contains(tick))
             this.subscribers.add(tick);
     }
 
-    public void unsubscribe(ITick tick) {
+    public void unsubscribe(TickListener tick) {
         this.subscribers.remove(tick);
     }
 
@@ -114,7 +114,7 @@ public class Timer {
         Engine engine = Engine.getInstance();
 
         for (int i = 0; i < ticks; i++)
-            for (ITick tick : subscribers) {
+            for (TickListener tick : subscribers) {
                 try {
                     tick.tick(this);
                 } catch (Exception e) {

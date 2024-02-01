@@ -2,20 +2,19 @@ package dev.artingl.Game.scene.node;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
-import dev.artingl.Engine.input.IInput;
+import dev.artingl.Engine.input.InputListener;
 import dev.artingl.Engine.input.Input;
 import dev.artingl.Engine.input.InputKeys;
 import dev.artingl.Engine.misc.Color;
-import dev.artingl.Engine.scene.components.CameraComponent;
-import dev.artingl.Engine.scene.components.RigidBodyComponent;
-import dev.artingl.Engine.scene.components.collider.CapsuleColliderComponent;
-import dev.artingl.Engine.scene.components.transform.TransformComponent;
-import dev.artingl.Engine.scene.nodes.CameraNode;
+import dev.artingl.Engine.world.scene.components.CameraComponent;
+import dev.artingl.Engine.world.scene.components.phys.CharacterControlComponent;
+import dev.artingl.Engine.world.scene.components.transform.TransformComponent;
+import dev.artingl.Engine.world.scene.nodes.CameraNode;
 import dev.artingl.Engine.timer.Timer;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-public class CameraControlNode extends CameraNode implements IInput {
+public class CameraControlNode extends CameraNode implements InputListener {
 
     public float defaultFov = 0;
     public float sprintFov = 0;
@@ -31,23 +30,14 @@ public class CameraControlNode extends CameraNode implements IInput {
 
     private Vector3f oldPosDelta = new Vector3f();
     private Vector2f oldRotDelta = new Vector2f();
-    private final CapsuleColliderComponent collider;
-    private final RigidBodyComponent rigidBody;
-    private boolean onGround;
+    private final CharacterControlComponent controller;
 
     public CameraControlNode() {
         super();
 
         /* Initialize camera collider and rigid body */
-        this.rigidBody = new RigidBodyComponent();
-        this.collider = new CapsuleColliderComponent(1, 2);
-        this.rigidBody.enableRotation = false;
-        this.rigidBody.enableBody = true;
-
-        this.addComponent(collider);
-        this.addComponent(this.rigidBody);
-
-        this.collider.setCollisionHandler(() -> this.onGround = true);
+        this.controller = new CharacterControlComponent();
+        this.addComponent(controller);
     }
 
     @Override
@@ -82,8 +72,8 @@ public class CameraControlNode extends CameraNode implements IInput {
     public void tick(Timer timer) {
         super.tick(timer);
 
-        this.collider.height = this.isSneaking ? 1.3f : 2f;
-        this.rigidBody.setOffset(new Vector3f(0, this.collider.height, 0));
+        this.controller.height = this.isSneaking ? 1.3f : 2f;
+        this.controller.setOffset(new Vector3f(0, this.controller.height, 0));
 
         /* Some useful refs */
         TransformComponent cameraTransform = getTransform();
@@ -114,22 +104,23 @@ public class CameraControlNode extends CameraNode implements IInput {
                     this.smoothFov(this.sprintFov);
                     this.fovState = !this.fovState;
                 }
-                this.movementSpeed = 2.4f;
+                this.movementSpeed = 0.4f;
             }
             else {
                 if (fovState) {
                     this.smoothFov(this.defaultFov);
                     this.fovState = !this.fovState;
                 }
-                this.movementSpeed = 1.6f;
+                this.movementSpeed = 0.2f;
             }
 
             /* Sneak */
             this.isSneaking = input.getKeyboardState(InputKeys.KEY_LEFT_CONTROL).isHeld();
 
             /* Jump */
-            if (input.getKeyboardState(InputKeys.KEY_SPACE).isHeld() && this.onGround) posDelta.y += jumpStrength * (this.isSneaking ? 0.5f : 1);
-            this.onGround = false;
+            this.controller.setJumpSpeed(this.isSneaking ? 10 : 15);
+            if (input.getKeyboardState(InputKeys.KEY_SPACE).isHeld()
+                    && this.controller.onGround()) this.controller.jump();
 
             /* Make new position vector */
             float sin = (float) Math.sin(Math.toRadians(cameraTransform.rotation.y));
@@ -137,24 +128,15 @@ public class CameraControlNode extends CameraNode implements IInput {
             Vector3f newPos = new Vector3f(posDelta.x * cos - posDelta.z * sin, posDelta.y, posDelta.z * cos + posDelta.x * sin);
 
             /* Update rigid body's velocity to move the camera */
-            this.oldPosDelta.set(
-                    oldPosDelta.x + (newPos.x - oldPosDelta.x) * 0.1f,
-                    0,
-                    oldPosDelta.z + (newPos.z - oldPosDelta.z) * 0.1f
-            );
-            this.rigidBody.addVelocity(0, newPos.y, 0);
-            this.rigidBody.setVelocity(
-                    oldPosDelta.x * (movementSpeed * (this.isSneaking ? 0.5f : 1)),
-                    Math.min(this.rigidBody.getVelocity().y, jumpStrength),
-                    oldPosDelta.z * (movementSpeed * (this.isSneaking ? 0.5f : 1))
-            );
+            this.controller.setWalkingDirection(new Vector3f(newPos.x, 0, newPos.z));
 
             /* Update camera rotation */
             cameraTransform.rotation.add(this.oldRotDelta.y * rotationSpeed, this.oldRotDelta.x * rotationSpeed, 0);
             cameraTransform.rotation.x = Math.max(-90, Math.min(90, cameraTransform.rotation.x));
+
         }
 
-        this.rigidBody.enableBody = this.captureControl;
+        this.controller.enableController = this.captureControl;
     }
 
     public CameraComponent getCamera() {

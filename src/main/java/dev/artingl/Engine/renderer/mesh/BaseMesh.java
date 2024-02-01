@@ -15,7 +15,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL15C.*;
@@ -217,6 +216,11 @@ public class BaseMesh implements IMesh {
     @Override
     public void reload() {
         this.makeDirty();
+    }
+
+    @Override
+    public VerticesBuffer getBuffer() {
+        return vertices;
     }
 
     @Override

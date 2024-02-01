@@ -129,4 +129,9 @@ public interface IMesh {
      * */
     void reload();
 
+    /**
+     * Get mesh's buffer that is used to build it.
+     * */
+    VerticesBuffer getBuffer();
+
 }

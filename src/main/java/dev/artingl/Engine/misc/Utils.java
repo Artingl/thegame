@@ -131,4 +131,29 @@ public class Utils {
         newBuffer.put(buffer);
         return newBuffer;
     }
+
+    public static com.jme3.math.Vector3f joml2jme(Vector3f v) {
+        return new com.jme3.math.Vector3f(v.x, v.y, v.z);
+    }
+
+    public static com.jme3.math.Vector2f joml2jme(Vector2f v) {
+        return new com.jme3.math.Vector2f(v.x, v.y);
+    }
+
+    public static com.jme3.math.Vector4f joml2jme(Vector4f v) {
+        return new com.jme3.math.Vector4f(v.x, v.y, v.z, v.w);
+    }
+
+    public static Vector3f jme2joml(com.jme3.math.Vector3f v) {
+        return new Vector3f(v.x, v.y, v.z);
+    }
+
+    public static Vector2f jme2joml(com.jme3.math.Vector2f v) {
+        return new Vector2f(v.x, v.y);
+    }
+
+    public static Vector4f jme2joml(com.jme3.math.Vector4f v) {
+        return new Vector4f(v.x, v.y, v.z, v.w);
+    }
+
 }

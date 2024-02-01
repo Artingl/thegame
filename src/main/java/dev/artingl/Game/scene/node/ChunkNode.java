@@ -1,8 +1,10 @@
 package dev.artingl.Game.scene.node;
 
 import dev.artingl.Engine.renderer.RenderContext;
-import dev.artingl.Engine.scene.components.MeshComponent;
-import dev.artingl.Engine.scene.nodes.SceneNode;
+import dev.artingl.Engine.world.scene.components.MeshComponent;
+import dev.artingl.Engine.world.scene.components.phys.RigidBodyComponent;
+import dev.artingl.Engine.world.scene.components.phys.collider.MeshColliderComponent;
+import dev.artingl.Engine.world.scene.nodes.SceneNode;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Game.level.chunk.Chunk;
 import org.joml.FrustumIntersection;
@@ -17,13 +19,13 @@ public class ChunkNode extends SceneNode {
         this.chunk = chunk;
 
         MeshComponent mesh = new MeshComponent(chunk.getMesh());
-//        TerrainColliderComponent collider = new TerrainColliderComponent(
-//                Chunk.CHUNK_SIZE, Chunk.CHUNK_SIZE,
-//                (x, z) -> chunk.getGenerator().getHeight(chunk.getPositionLevel().x + x, chunk.getPositionLevel().y + z)
-//        );
+        MeshColliderComponent collider = new MeshColliderComponent(chunk.getMesh());
+        RigidBodyComponent rb = new RigidBodyComponent();
+        rb.isKinematic = true;
 
-        this.addComponent(mesh);
-//        this.addComponent(collider);
+        this.addComponent(mesh);;
+        this.addComponent(collider);
+        this.addComponent(rb);
     }
 
     /**

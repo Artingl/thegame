@@ -8,7 +8,7 @@ import dev.artingl.Engine.renderer.RenderContext;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.pipeline.IPipeline;
 import dev.artingl.Engine.renderer.pipeline.PipelineInstance;
-import dev.artingl.Engine.texture.Texture;
+import dev.artingl.Engine.resources.texture.Texture;
 import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
@@ -198,7 +198,7 @@ public class ShaderProgram implements IPipeline {
 //        System.out.println(mainTexture);
         this.activateTexture("texture0", 0, mainTexture);
         this.activateTexture("framebufferTexture", 1, renderer.getRenderTextureId());
-        this.mainTexture = -1;
+        this.mainTexture = Texture.MISSING.getTextureId();
 
         int i = 2;
         for (TextureUniform tex: this.textures) {

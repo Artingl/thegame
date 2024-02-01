@@ -1,14 +1,14 @@
 package dev.artingl.Engine.renderer.mesh;
 
 import dev.artingl.Engine.Engine;
-import dev.artingl.Engine.IEngineEvent;
+import dev.artingl.Engine.EngineEventListener;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.renderer.Renderer;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class MeshManager implements IEngineEvent {
+public class MeshManager implements EngineEventListener {
 
     private final ConcurrentLinkedDeque<IMesh> activeMeshes;
     private final Logger logger;

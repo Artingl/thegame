@@ -2,25 +2,23 @@ package dev.artingl.Engine.input;
 
 import dev.artingl.Engine.Display;
 import dev.artingl.Engine.Engine;
-import dev.artingl.Engine.timer.ITick;
+import dev.artingl.Engine.debug.LogLevel;
+import dev.artingl.Engine.timer.TickListener;
 import dev.artingl.Engine.timer.Timer;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 
-import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class Input implements ITick {
+public class Input implements TickListener {
 
     private final State[] kbKeyStates;
     private final State[] msKeyStates;
     private int kbModKeysState;
 
-    private final Collection<IInput> subscribers;
+    private final Collection<InputListener> subscribers;
     private final Collection<InputEvent> eventsStack;
 
     private Vector2i mouseWheel;
@@ -50,14 +48,14 @@ public class Input implements ITick {
     /**
      * Subscribe for input events
      */
-    public void subscribe(IInput input) {
+    public void subscribe(InputListener input) {
         this.subscribers.add(input);
     }
 
     /**
      * Unsubscribe from input events
      */
-    public void unsubscribe(IInput input) {
+    public void unsubscribe(InputListener input) {
         this.subscribers.remove(input);
     }
 
@@ -124,6 +122,11 @@ public class Input implements ITick {
      * @param state The state to be set
      */
     public void setKeyboardStateArray(int key, int state) {
+        if (key < 0) {
+            Engine.getInstance().getLogger().log(LogLevel.WARNING, "Invalid key code: %d, State: %d", key, state);
+            return;
+        }
+
         this.kbKeyStates[key] = State.from(state);
         this.eventsStack.add(new InputEvent(InputEventType.KEYBOARD, State.from(state), key));
     }
@@ -185,7 +188,7 @@ public class Input implements ITick {
         // Make all event calls that were added to the stack by display callbacks
         synchronized (this.eventsStack) {
             for (InputEvent event: this.eventsStack) {
-                for (IInput input : subscribers) {
+                for (InputListener input : subscribers) {
                     switch (event.type) {
                         case KEYBOARD ->
                                 input.keyboardEvent(this, (State) event.values[0], (Integer) event.values[1]);

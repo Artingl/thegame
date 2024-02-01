@@ -1,31 +1,31 @@
 package dev.artingl.Engine;
 
-import dev.artingl.Engine.audio.SoundsManager;
+import com.jme3.app.SimpleApplication;
+import dev.artingl.Engine.world.audio.SoundsManager;
 import dev.artingl.Engine.debug.Debugger;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.debug.Profiler;
-import dev.artingl.Engine.input.IInput;
+import dev.artingl.Engine.input.InputListener;
 import dev.artingl.Engine.input.Input;
 import dev.artingl.Engine.input.InputKeys;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.resources.Options;
 import dev.artingl.Engine.resources.Resource;
-import dev.artingl.Engine.texture.TextureManager;
+import dev.artingl.Engine.resources.texture.TextureManager;
 import dev.artingl.Engine.threading.ThreadsManager;
-import dev.artingl.Engine.scene.SceneManager;
-import dev.artingl.Engine.timer.ITick;
+import dev.artingl.Engine.world.scene.SceneManager;
+import dev.artingl.Engine.timer.TickListener;
 import dev.artingl.Engine.timer.Timer;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
-import org.ode4j.ode.OdeHelper;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11C.*;
 
-public class Engine implements ITick, IInput {
+public class Engine implements TickListener, InputListener {
 
     private static Engine instance;
 
@@ -48,7 +48,7 @@ public class Engine implements ITick, IInput {
     private final TextureManager textureManager;
     private final Timer timer;
     private final SoundsManager soundsManager;
-    private final ConcurrentLinkedDeque<IEngineEvent> engineEvents;
+    private final ConcurrentLinkedDeque<EngineEventListener> engineEvents;
 
     private boolean reload;
 
@@ -120,8 +120,19 @@ public class Engine implements ITick, IInput {
         return renderer;
     }
 
+    public void loadLibs() {
+        this.logger.log(LogLevel.INFO, "Loading all libraries");
+
+        // TODO: thats too bad... the actual DLL is located inside the jme3 natives jar, but
+        //       i am too lazy right now to make a loader for it. So, i just decided to put it
+        //       somewhere on my system and load manually. MUST BE FIXED!!!
+        System.load("C:\\stuff\\Environment\\Documents\\bulletjme.dll");
+    }
+
     public void create() throws Exception {
         this.logger.log(LogLevel.INFO, "Setting up the engine");
+
+        this.loadLibs();
 
         // Setup error callback for GLFW
         GLFWErrorCallback.createPrint(this.logger.getErrStream()).set();
@@ -171,9 +182,6 @@ public class Engine implements ITick, IInput {
         glFrontFace(GL_CCW);
 
         this.timer.enterLoop();
-
-        // Initialize ode4j
-        OdeHelper.initODE2(0);
     }
 
     public void terminate() {
@@ -184,7 +192,6 @@ public class Engine implements ITick, IInput {
         this.timer.terminate();
         this.renderer.terminate();
         this.display.terminate();
-        OdeHelper.closeODE();
 
         // Terminate glfw
         glfwTerminate();
@@ -208,7 +215,7 @@ public class Engine implements ITick, IInput {
             this.logger.log(LogLevel.INFO, "Reloading!");
 
             // Tell all engine subscribers that they need to reload
-            for (IEngineEvent subscriber: this.engineEvents)
+            for (EngineEventListener subscriber: this.engineEvents)
                 subscriber.onReload();
             this.reload = false;
         }
@@ -240,7 +247,7 @@ public class Engine implements ITick, IInput {
     /**
      * Subscribe for engine's events
      * */
-    public void subscribeEngineEvents(IEngineEvent handler) {
+    public void subscribeEngineEvents(EngineEventListener handler) {
         if (!this.engineEvents.contains(handler))
             this.engineEvents.add(handler);
     }
@@ -248,7 +255,7 @@ public class Engine implements ITick, IInput {
     /**
      * Unsubscribe for engine's events
      * */
-    public void unsubscribeEngineEvents(IEngineEvent handler) {
+    public void unsubscribeEngineEvents(EngineEventListener handler) {
         this.engineEvents.remove(handler);
     }
 
