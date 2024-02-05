@@ -17,10 +17,6 @@ public class Component implements TickListener {
 
     public void render(SceneNode node, RenderContext context) {}
 
-    public void disable() {}
-
-    public void enable() {}
-
     public String getName() {
         return getClass().getSimpleName();
     }

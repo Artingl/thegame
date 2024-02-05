@@ -39,6 +39,7 @@ public class ModelProperties {
                         JSONObject materialJson = (JSONObject) obj;
 
                         boolean isTiled = false;
+                        float opacity = 1;
                         String texture = null;
 
                         if (materialJson.has("texture"))
@@ -47,8 +48,11 @@ public class ModelProperties {
                         if (materialJson.has("texture_tile"))
                             isTiled = materialJson.getBoolean("texture_tile");
 
+                        if (materialJson.has("opacity"))
+                            opacity = materialJson.getFloat("opacity");
+
                         String materialName = key.substring(9);
-                        MaterialProperty prop = new MaterialProperty(materialName, texture == null ? null : new Resource(texture), isTiled);
+                        MaterialProperty prop = new MaterialProperty(materialName, texture == null ? null : new Resource(texture), opacity, isTiled);
                         this.materialProperties.put(materialName, prop);
                     }
                 }
@@ -71,13 +75,19 @@ public class ModelProperties {
     public static class MaterialProperty {
 
         private final String name;
-        private final boolean textureTile;
         private final Resource customTexture;
+        private final boolean textureTile;
+        private final float opacity;
 
-        public MaterialProperty(String name, Resource customTexture, boolean textureTile) {
+        public MaterialProperty(String name, Resource customTexture, float opacity, boolean textureTile) {
             this.name = name;
+            this.opacity = opacity;
             this.textureTile = textureTile;
             this.customTexture = customTexture;
+        }
+
+        public float getOpacity() {
+            return opacity;
         }
 
         public Resource getCustomTexture() {

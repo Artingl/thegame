@@ -220,16 +220,19 @@ public class Debugger implements IPipeline {
     }
 
     public void drawSceneNode(SceneNode node, int depth) {
+        if (node == null)
+            return;
+
         // TODO: remove this
         if (node.getNametag().startsWith("Chunk"))
             return;
 
-        if (ImGui.selectable((" ".repeat(depth*2)) + node.getNametag(), selectedNode == node)) {
+        if (ImGui.selectable((" ".repeat(depth * 2)) + node.getNametag(), selectedNode == node)) {
             selectedNode = node;
         }
 
         // Draw all node's children
-        for (SceneNode child: node.getChildrenNodes()) {
+        for (SceneNode child : node.getChildrenNodes()) {
             drawSceneNode(child, depth + 1);
         }
     }

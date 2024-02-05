@@ -22,7 +22,7 @@ public class Level implements TickListener {
     public static final int DAY_CYCLE_TICKS = MOON_CYCLE_TICKS + SUN_CYCLE_TICKS;
 
     // Chunks each direction
-    public static final int LEVEL_SIZE = 8;//16;
+    public static final int LEVEL_SIZE = 4;//8;//16;
 
     private final Map<Vector2i, Chunk> chunks;
     private final LevelTerrainGenerator generator;

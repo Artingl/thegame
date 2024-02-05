@@ -24,8 +24,8 @@ public class ModelMesh implements IMesh {
     private final Map<String, BaseMesh> modelMeshes;
 
     // List of meshes to use
+    private final String[] customMeshes;
     private final List<String> meshes;
-
     private final List<Matrix4f> instances;
     private MeshQuality currentQuality;
     private Matrix4f modelMatrix;
@@ -35,7 +35,7 @@ public class ModelMesh implements IMesh {
     private boolean enableFadeAnimation;
 
     public ModelMesh(IModel model) {
-        this(model, null);
+        this(model, (String[]) null);
     }
 
     /**
@@ -56,6 +56,7 @@ public class ModelMesh implements IMesh {
         this.currentQuality = MeshQuality.HIGH;
         this.isDirty = true;
         this.enableFadeAnimation = true;
+        this.customMeshes = meshes;
 
         // Render all meshes if the provided value is null
         if (meshes == null)
@@ -135,6 +136,7 @@ public class ModelMesh implements IMesh {
                     texture = engine.getTextureManager().getTexture(material.getCustomTexture());
 
                 texture.setTiling(material.isTextureTiled());
+                mesh.setOpacity(material.getOpacity());
             }
 
             program.setMainTexture(texture);
@@ -336,13 +338,32 @@ public class ModelMesh implements IMesh {
 
     @Override
     public void reload() {
+        String[] meshes;
+
+        for (BaseMesh mesh: modelMeshes.values()) {
+            mesh.cleanup();
+        }
+
         this.model.cleanup();
+        this.modelMeshes.clear();
+        this.meshes.clear();
+
+        if (this.customMeshes != null)
+            meshes = this.customMeshes;
+        else
+            meshes = model.getMeshNames();
+
+        for (String mesh : meshes)
+            this.addMesh(mesh);
         this.makeDirty();
     }
 
     @Override
-    public VerticesBuffer getBuffer() {
-        Engine.getInstance().getLogger().log(LogLevel.UNIMPLEMENTED, "ModelMesh cannot return VerticesBuffer in getBuffer method.");
-        return null;
+    public VerticesBuffer[] getBuffer() {
+        VerticesBuffer[] buffers = new VerticesBuffer[this.modelMeshes.size()];
+        int i = 0;
+        for (BaseMesh mesh: this.modelMeshes.values())
+            buffers[i++] = mesh.getBuffer()[0];
+        return buffers;
     }
 }

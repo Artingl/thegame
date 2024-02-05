@@ -1,5 +1,6 @@
 package dev.artingl.Engine.resources;
 
+import dev.artingl.Engine.EngineException;
 import dev.artingl.Game.GameDirector;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,15 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 public class Resource {
+
+    private static String RESOURCES_LOCATION = null;
+
+    /**
+     * Set path where the engine would look for all resources used in the game.
+     */
+    public static void setResourcesLocation(String loc) {
+        RESOURCES_LOCATION = loc;
+    }
 
     private final String namespace;
     private final String path;
@@ -47,6 +57,14 @@ public class Resource {
     }
 
     public DataInputStream load() throws IOException {
+        if (RESOURCES_LOCATION != null) {
+            try {
+                return new DataInputStream(getURI().toURL().openStream());
+            } catch (IOException e) {
+                throw new IOException("Unable to load file " + this + " (" + e + ")");
+            }
+        }
+
         InputStream stream = GameDirector.class.getResourceAsStream("/" + namespace + "/" + path);
         if (stream == null)
             throw new IOException("Unable to load file " + this);
@@ -55,8 +73,15 @@ public class Resource {
     }
 
     @Nullable
-    public URI getURI() {
+    public URI getURI() throws EngineException {
         try {
+            if (RESOURCES_LOCATION != null) {
+                File file = new File(RESOURCES_LOCATION + "/" + namespace + "/" + path);
+                if (!file.exists())
+                    return null;
+                return file.toURI();
+            }
+
             URL url = GameDirector.class.getResource("/" + namespace + "/" + path);
             if (url != null)
                 return url.toURI();
@@ -69,14 +94,14 @@ public class Resource {
      * Make new resource relative to this one
      *
      * @param path Path that would be added to this resource
-     * */
+     */
     public Resource relative(String path) {
         return new Resource(namespace, this.path + "/" + path);
     }
 
     /**
      * Check if the resource is valid
-     * */
+     */
     public boolean exists() {
         return getURI() != null;
     }

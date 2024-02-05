@@ -36,6 +36,7 @@ public class SoundComponent extends Component {
     @Override
     public void cleanup() {
         super.cleanup();
+        this.source.stop();
         getEngine().getSoundsManager().removeSource(this.source);
     }
 
@@ -56,5 +57,10 @@ public class SoundComponent extends Component {
             this.source.setVolume(this.volume);
             this.isPlaying = this.source.isPlaying();
         }
+    }
+
+    @Override
+    public String getName() {
+        return "Sound Source";
     }
 }

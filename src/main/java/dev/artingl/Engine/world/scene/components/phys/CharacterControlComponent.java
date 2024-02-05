@@ -14,7 +14,7 @@ import org.joml.Vector3f;
 
 public class CharacterControlComponent extends Component {
 
-    public boolean enableController = true;
+    public boolean enableController = false;
     public float height = 2;
 
     private final CharacterControl controller;
@@ -67,6 +67,10 @@ public class CharacterControlComponent extends Component {
         }
 
         this.controller.setEnabled(enableController);
+        if (!enableController) {
+            lastPos = null;
+            return;
+        }
 
         // Update transforms
         TransformComponent transform = node.getTransform();
@@ -75,7 +79,7 @@ public class CharacterControlComponent extends Component {
         if (!transform.position.equals(lastPos)) {
             this.controller.setPhysicsLocation(Utils.joml2jme(transform.position));
         }
-        else transform.position = position.add(offset);
+        else transform.position = new Vector3f(transform.position).add(position.add(offset).sub(transform.position));
         lastPos = transform.position;
     }
 

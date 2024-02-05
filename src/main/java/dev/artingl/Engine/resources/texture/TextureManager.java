@@ -64,43 +64,8 @@ public class TextureManager implements EngineEventListener {
         if (!target.exists())
             return null;
 
-        // Load texture and find free area on the atlas
         BufferedImage texture = ImageIO.read(target.load());
-        int textureId = glGenTextures();
-
-        // Bind texture
-        glBindTexture(GL_TEXTURE_2D, textureId);
-
-        // Make byte buffer for the atlas (RGBA)
-        int width = texture.getWidth();
-        int height = texture.getHeight();
-        int capacity = width * height * 4;
-        int[] pixels = new int[texture.getWidth() * texture.getHeight()];;
-        ByteBuffer buffer = BufferUtils.createByteBuffer(capacity);
-
-        texture.getRGB(0, 0, texture.getWidth(), texture.getHeight(), pixels, 0, texture.getWidth());
-        for(int y = 0; y < texture.getHeight(); y++){
-            for(int x = 0; x < texture.getWidth(); x++){
-                int pixel = pixels[y * texture.getWidth() + x];
-                buffer.put((byte) ((pixel >> 16) & 0xFF));
-                buffer.put((byte) ((pixel >> 8) & 0xFF));
-                buffer.put((byte) (pixel & 0xFF));
-                buffer.put((byte) ((pixel >> 24) & 0xFF));
-            }
-        }
-        buffer.flip();
-
-        // Send the buffer to opengl
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-
-        // Set params and unbind
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        return new Texture(textureId);
+        return new Texture(texture);
     }
 
     /**
@@ -135,9 +100,9 @@ public class TextureManager implements EngineEventListener {
         }
 
         // Load missing texture first
-        this.textures.put(
-                new Resource("engine", "internal/missing"),
-                loadTexture(new Resource("engine", "textures/internal/missing.jpg")));
+        Texture missing = Texture.MISSING;
+        missing.updateTexture(new Resource("engine", "textures/internal/missing.jpg"));
+        this.textures.put(new Resource("engine", "internal/missing"), missing);
 
         // Load all textures
         try (Stream<Path> walk = Files.walk(directory, 3).filter(Files::isRegularFile)) {

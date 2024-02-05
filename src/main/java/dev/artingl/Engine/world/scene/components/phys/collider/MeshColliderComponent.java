@@ -28,28 +28,42 @@ public class MeshColliderComponent extends BaseColliderComponent {
     @Override
     protected CollisionShape buildCollider() {
         if (shape == null && mesh.isBaked()) {
-            VerticesBuffer buffer = mesh.getBuffer();
-            VerticesBuffer.Attribute[] attributes = buffer.getAttributes();
-            List<Object> fields = buffer.getFields();
+            VerticesBuffer[] buffers = mesh.getBuffer();
+            int size = 0, offset = 0;
 
-            // Since we build our meshes not like the jbullet expects it to be,
-            // we need to build new mesh only with positions (we expect the first 3 floats of each vertex to be the position of the vertex)
-            float[] vertices = new float[(fields.size() / attributes.length) * 3];
-            int vertIdx = 0;
+            // Calculate the buffer size for all vertices in all buffers
+            for (VerticesBuffer buffer: buffers) {
+                VerticesBuffer.Attribute[] attributes = buffer.getAttributes();
+                List<Object> fields = buffer.getFields();
+                size += (fields.size() / attributes.length) * 3;
+            }
 
-            // Parse all positions in the mesh
-            for (int i = 0; i < fields.size(); i += attributes.length) {
-                Object value = fields.get(i);
+            // Iterate through all buffers which are used in the mesh and build the vertices buffer
+            float[] finalVertices = new float[size];
+            for (VerticesBuffer buffer: buffers) {
+                VerticesBuffer.Attribute[] attributes = buffer.getAttributes();
+                List<Object> fields = buffer.getFields();
 
-                assert value instanceof Vector3f;
+                // Since we build our meshes not like the jbullet expects it to be,
+                // we need to build new mesh only with positions (we expect the first 3 floats of each vertex to be the position of the vertex)
+                int vertIdx = 0;
 
-                vertices[vertIdx++] = ((Vector3f) value).x;
-                vertices[vertIdx++] = ((Vector3f) value).y;
-                vertices[vertIdx++] = ((Vector3f) value).z;
+                // Parse all positions in the mesh
+                for (int i = 0; i < fields.size(); i += attributes.length) {
+                    Object value = fields.get(i);
+
+                    assert value instanceof Vector3f;
+
+                    finalVertices[offset + (vertIdx++)] = ((Vector3f) value).x;
+                    finalVertices[offset + (vertIdx++)] = ((Vector3f) value).y;
+                    finalVertices[offset + (vertIdx++)] = ((Vector3f) value).z;
+                }
+
+                offset += (fields.size() / attributes.length) * 3;
             }
 
             com.jme3.scene.Mesh mesh = new com.jme3.scene.Mesh();
-            mesh.setBuffer(VertexBuffer.Type.Position, 3, vertices);
+            mesh.setBuffer(VertexBuffer.Type.Position, 3, finalVertices);
 
             this.shape = new MeshCollisionShape(mesh);
         }
@@ -59,7 +73,7 @@ public class MeshColliderComponent extends BaseColliderComponent {
 
     @Override
     public String getName() {
-        return "Terrain Collider";
+        return "Mesh Collider";
     }
 
     public interface ITerrainHeightHandler {

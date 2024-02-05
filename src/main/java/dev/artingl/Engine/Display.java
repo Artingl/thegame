@@ -34,6 +34,7 @@ public class Display {
     private boolean isFullscreenEnabled = false;
     private boolean isInFocus = true;
     private boolean isCursorCaptured = false;
+    private boolean cursorWasCaptured = false;
 
     private Vector2f mousePosition = new Vector2f();
     private Vector2f lastMousePosition = new Vector2f();
@@ -241,10 +242,16 @@ public class Display {
     public void tick(Timer timer) {
         this.input.setMousePosition(this.mousePosition.x, this.mousePosition.y);
         if (this.isCursorCaptured && isInFocus()) {
+            if (!this.cursorWasCaptured) {
+                this.lastMousePosition = this.mousePosition;
+                this.cursorWasCaptured = true;
+            }
+
             this.mouseDelta = new Vector2f(this.mousePosition).sub(this.lastMousePosition);
             this.lastMousePosition = this.mousePosition;
         }
         else {
+            this.cursorWasCaptured = false;
             this.mouseDelta = new Vector2f(0, 0);
         }
     }

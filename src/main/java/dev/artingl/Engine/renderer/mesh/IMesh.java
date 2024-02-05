@@ -5,9 +5,6 @@ import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
-import java.util.ArrayList;
-import java.util.List;
-
 
 public interface IMesh {
 
@@ -124,14 +121,14 @@ public interface IMesh {
     /**
      * Completely reloads the mesh (useful for meshes loading its data from external sources, e.g. files).
      * Also makes the mesh dirty.
-     *
+     * <p>
      * Note: avoid calling this method and rather use the Engine::reload, since it'd do the full reload without issues
      * */
     void reload();
 
     /**
-     * Get mesh's buffer that is used to build it.
-     * */
-    VerticesBuffer getBuffer();
+     * Get all buffers which are used to build the mesh.
+     */
+    VerticesBuffer[] getBuffer();
 
 }

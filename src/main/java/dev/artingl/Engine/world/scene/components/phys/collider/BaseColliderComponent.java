@@ -2,6 +2,9 @@ package dev.artingl.Engine.world.scene.components.phys.collider;
 
 import com.jme3.bullet.PhysicsSpace;
 import com.jme3.bullet.collision.shapes.CollisionShape;
+import com.jme3.bullet.control.GhostControl;
+import com.jme3.bullet.util.CollisionShapeFactory;
+import com.jme3.scene.Spatial;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.world.scene.BaseScene;
 import dev.artingl.Engine.world.scene.components.Component;
@@ -11,9 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BaseColliderComponent extends Component {
 
-    protected Runnable triggerHandler;
-    protected boolean isColliderBuilt = false;
-
+    private boolean isColliderBuilt = false;
     private CollisionShape shape;
 
     @Override
@@ -24,10 +25,12 @@ public class BaseColliderComponent extends Component {
         if (node == null)
             return;
 
-        BaseScene scene = node.getScene();
-        PhysicsSpace space = scene.getPhysicsSpace();
-        if (this.shape != null)
-            space.remove(this.shape);
+        try {
+            BaseScene scene = node.getScene();
+            PhysicsSpace space = scene.getPhysicsSpace();
+            if (this.shape != null)
+                space.remove(this.shape);
+        } catch (Exception ignored) {}
     }
 
     /**
@@ -36,13 +39,6 @@ public class BaseColliderComponent extends Component {
     protected CollisionShape buildCollider() {
         getEngine().getLogger().log(LogLevel.UNIMPLEMENTED, "Don't use BaseColliderComponent as the collider for objects.");
         return null;
-    }
-
-    /**
-     * Set trigger handler that will be called on collision with any other colliders.
-     */
-    public void setCollisionHandler(Runnable handler) {
-        this.triggerHandler = handler;
     }
 
     @Override
@@ -80,4 +76,5 @@ public class BaseColliderComponent extends Component {
     public CollisionShape getShape() {
         return shape;
     }
+
 }

@@ -82,10 +82,10 @@ public class SoundsManager {
 
                 // TODO: be able to control the distance in settings
                 // TODO: this if statement loops the sound
-                if (!source.isPlaying() && cameraDst < 250)
-                    source.play();
-                else if (source.isPlaying() && cameraDst > 250)
-                    source.stop();
+//                if (!source.isPlaying() && cameraDst < 250)
+//                    source.play();
+//                else if (source.isPlaying() && cameraDst > 250)
+//                    source.stop();
             }
         }
     }

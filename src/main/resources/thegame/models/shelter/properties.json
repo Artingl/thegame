@@ -2,16 +2,60 @@
   "material.floor": {
     "texture_tile": true
   },
-  "material.wall0.1": {
-    "texture_tile": true,
-	"texture": "thegame:models/shelter/wall"
+  
+  "material.window_glass": {
+	"opacity": 0.4,
+    "texture_tile": true
   },
-  "material.wall0.2": {
-    "texture_tile": true,
-	"texture": "thegame:models/shelter/wall_bottom"
+  
+  "material.wall0": {
+	"texture": "thegame:models/shelter/wall",
+	"texture_tile": true
   },
-  "material.wall0.3": {
-    "texture_tile": true,
-	"texture": "thegame:models/shelter/wall_bottom"
-  }
+  
+  "material.wall1": {
+	"texture": "thegame:models/shelter/wall",
+	"texture_tile": true
+  },
+  
+  "material.wall2": {
+	"texture": "thegame:models/shelter/wall",
+	"texture_tile": true
+  },
+  
+  "material.wall3": {
+	"texture": "thegame:models/shelter/wall",
+	"texture_tile": true
+  },
+  
+  "material.wall4": {
+	"texture": "thegame:models/shelter/wall",
+	"texture_tile": true
+  },
+  
+  "material.wall5": {
+	"texture": "thegame:models/shelter/wall",
+	"texture_tile": true
+  },
+  
+  "material.wall6": {
+	"texture": "thegame:models/shelter/wall",
+	"texture_tile": true
+  },
+  
+  "material.wall7": {
+	"texture": "thegame:models/shelter/wall",
+	"texture_tile": true
+  },
+  
+  "material.wall8": {
+	"texture": "thegame:models/shelter/wall",
+	"texture_tile": true
+  },
+  
+  "material.wall9": {
+	"texture": "thegame:models/shelter/wall",
+		"texture_tile": true
+  },
+
 }

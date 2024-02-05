@@ -9,6 +9,8 @@ public interface IViewport {
     Vector3f getRotation();
     Vector3f getScale();
 
+    Vector3f getProjectionRotation();
+
     float getFov();
     float getAspect();
     float getWidth();

@@ -55,7 +55,7 @@ public class Viewport {
     /**
      * Will update all matrices
      */
-    public void call() {
+    public void update() {
         if (currentViewport == null) {
             // No viewport is being used
             this.view.set(new Matrix4f().zero());
@@ -96,6 +96,12 @@ public class Viewport {
             );
         }
 
+        // Rotate the projection
+        Vector3f rot = currentViewport.getProjectionRotation();
+        this.proj.rotate((float) Math.toRadians(rot.x), 1, 0, 0);
+        this.proj.rotate((float) Math.toRadians(rot.y), 0, 1, 0);
+        this.proj.rotate((float) Math.toRadians(rot.z), 0, 0, 1);
+
         // Clear the screen with our color
         Color color = currentViewport.getBackgroundColor();
 
@@ -104,6 +110,8 @@ public class Viewport {
 
         this.frustum.set(new Matrix4f(proj).mul(view));
     }
+
+    public float test = -1;
 
     /**
      * Returns current background color of the viewport

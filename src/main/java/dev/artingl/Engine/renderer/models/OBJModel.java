@@ -39,8 +39,6 @@ public class OBJModel implements IModel {
     }
 
     public OBJModel(Resource model, int mode) {
-        Engine engine = Engine.getInstance();
-
         this.mode = mode;
         this.parser = new OBJParser();
         this.resource = model;
@@ -48,26 +46,7 @@ public class OBJModel implements IModel {
         this.properties = new ModelProperties(this);
         this.validMesh = true;
 
-        // Parse all mesh names
-        try {
-            Resource resource = this.resource.relative("high.obj");
-            com.mokiat.data.front.parser.OBJModel objModel = parser.parse(resource.load());
-            int i = 0;
-
-            this.meshNames = new String[objModel.getObjects().size()];
-            for (OBJObject object : objModel.getObjects()) {
-                this.meshNames[i++] = object.getName();
-            }
-        } catch (Exception e) {
-            engine.getLogger().exception(e, "Unable to load the model!");
-            this.validMesh = false;
-            return;
-        }
-
-        // Initialize meshes map with all possible names
-        for (String name: this.meshNames) {
-            this.meshes.put(name, new VerticesBuffer[MeshQuality.values().length-1]);
-        }
+        this.initializeModel();
     }
 
     @Override
@@ -184,6 +163,9 @@ public class OBJModel implements IModel {
                     buffers[i] = null;
                 }
             }
+
+            this.meshes.clear();
+            this.initializeModel();
         }
     }
 
@@ -195,5 +177,30 @@ public class OBJModel implements IModel {
     @Override
     public ModelProperties getProperties() {
         return properties;
+    }
+
+    private void initializeModel() {
+        Engine engine = Engine.getInstance();
+
+        // Parse all mesh names
+        try {
+            Resource resource = this.resource.relative("high.obj");
+            com.mokiat.data.front.parser.OBJModel objModel = parser.parse(resource.load());
+            int i = 0;
+
+            this.meshNames = new String[objModel.getObjects().size()];
+            for (OBJObject object : objModel.getObjects()) {
+                this.meshNames[i++] = object.getName();
+            }
+        } catch (Exception e) {
+            engine.getLogger().exception(e, "Unable to load the model!");
+            this.validMesh = false;
+            return;
+        }
+
+        // Initialize meshes map with all possible names
+        for (String name: this.meshNames) {
+            this.meshes.put(name, new VerticesBuffer[MeshQuality.values().length-1]);
+        }
     }
 }

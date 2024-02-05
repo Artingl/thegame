@@ -73,7 +73,7 @@ public class Shader {
             /* At this point we successfully compiled the shader.
              * Just go on and return the ID at the bottom of the function.
              */
-        } catch (IOException | EngineException e) {
+        } catch (Exception e) {
             // Print the exception and cleanup everything
             cleanup();
             logger.exception(e, "Unable to initialize the shader \"%s\"", resource);

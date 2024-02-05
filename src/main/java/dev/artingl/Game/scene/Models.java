@@ -11,6 +11,8 @@ public class Models {
     public static final OBJModel SKULL = new OBJModel(new Resource("thegame", "models/skull"));
     public static final OBJModel SHELTER = new OBJModel(new Resource("thegame", "models/shelter"));
     public static final OBJModel DINGUS = new OBJModel(new Resource("thegame", "models/dingus"));
+    public static final OBJModel SERVER = new OBJModel(new Resource("thegame", "models/server"));
+    public static final OBJModel LAPTOP = new OBJModel(new Resource("thegame", "models/laptop"));
 
 
     // The same order as in EnvironmentObjects
@@ -20,7 +22,9 @@ public class Models {
             GRASS,
             SKULL,
             SHELTER,
-            DINGUS
+            DINGUS,
+            SERVER,
+            LAPTOP
     };
 
 }

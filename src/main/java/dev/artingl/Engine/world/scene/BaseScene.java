@@ -1,6 +1,7 @@
 package dev.artingl.Engine.world.scene;
 
 import com.jme3.bullet.PhysicsSpace;
+import com.jme3.math.Vector3f;
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
@@ -16,9 +17,7 @@ import dev.artingl.Engine.timer.TickListener;
 import dev.artingl.Engine.timer.Timer;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
@@ -43,9 +42,7 @@ public class BaseScene implements TickListener, InputListener {
         this.dimension = new Dimension();
 
         this.physicsSpace = new PhysicsSpace();
-        this.physicsSpace.addCollisionListener((e) -> {
-            System.out.println("COLLISION!!!! " + e);
-        });
+        this.physicsSpace.setGravity(new Vector3f(0, -14f, 0));
     }
 
     /**
@@ -65,11 +62,10 @@ public class BaseScene implements TickListener, InputListener {
     /**
      * Set the main camera node for the scene.
      *
-     * @param node The node to be set as camera
+     * @param cam The node to be set as camera
      */
-    public void setMainCamera(SceneNode node) {
-        if (node instanceof CameraNode cam)
-            this.mainCamera = cam;
+    public void setMainCamera(CameraNode cam) {
+        this.mainCamera = cam;
     }
 
     @Nullable
@@ -93,8 +89,8 @@ public class BaseScene implements TickListener, InputListener {
         this.lazyNodes.add(node);
 
         // Try to set the node as main camera if we don't have
-        if (mainCamera == null) {
-            this.setMainCamera(node);
+        if (mainCamera == null && node instanceof CameraNode cam) {
+            this.setMainCamera(cam);
         }
     }
 
@@ -115,8 +111,8 @@ public class BaseScene implements TickListener, InputListener {
             this.lazyNodes.add(child);
 
             // Try to set the node as main camera if we don't have
-            if (mainCamera == null) {
-                this.setMainCamera(node);
+            if (mainCamera == null && node instanceof CameraNode cam) {
+                this.setMainCamera(cam);
             }
             return true;
         }
@@ -260,10 +256,14 @@ public class BaseScene implements TickListener, InputListener {
         } else {
             // Print warning that we don't have any camera on the scene
             this.logger.log(LogLevel.WARNING, "No camera is set for the scene!");
+            return;
         }
 
         // Render nodes
-        for (SceneNode node : nodesList.values()) {
+        List<SceneNode> sortedNodes = new ArrayList<>(nodesList.values());
+        sortedNodes.sort(new SceneNodesSorter(mainCamera));
+
+        for (SceneNode node: sortedNodes) {
             node.render(context);
         }
 
@@ -294,6 +294,7 @@ public class BaseScene implements TickListener, InputListener {
             node.tick(timer);
 
         this.physicsSpace.update(1 / timer.getTickPerSecond());
+        this.physicsSpace.distributeEvents();
     }
 
     @Override

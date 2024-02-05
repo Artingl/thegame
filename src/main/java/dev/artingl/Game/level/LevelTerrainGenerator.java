@@ -1,5 +1,6 @@
 package dev.artingl.Game.level;
 
+import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.misc.noise.PerlinNoise;
@@ -62,13 +63,13 @@ public class LevelTerrainGenerator {
 
                 // First triangle vectors and normal
                 Vector3f fv0 = new Vector3f(0.0f, 0.0f, 0.0f).add(x, corners[0].getHeight(), z);
-                Vector3f fv1 = new Vector3f(0.0f, 0.0f, STEP).add(x, corners[2].getHeight(), z);
-                Vector3f fv2 = new Vector3f(STEP, 0.0f, 0.0f).add(x, corners[1].getHeight(), z);
+                Vector3f fv1 = new Vector3f(STEP, 0.0f, 0.0f).add(x, corners[1].getHeight(), z);
+                Vector3f fv2 = new Vector3f(0.0f, 0.0f, STEP).add(x, corners[2].getHeight(), z);
 
                 // Second triangle vectors and normal
                 Vector3f sv0 = new Vector3f(STEP, 0.0f, STEP).add(x, corners[3].getHeight(), z);
-                Vector3f sv1 = new Vector3f(STEP, 0.0f, 0.0f).add(x, corners[4].getHeight(), z);
-                Vector3f sv2 = new Vector3f(0.0f, 0.0f, STEP).add(x, corners[5].getHeight(), z);
+                Vector3f sv1 = new Vector3f(0.0f, 0.0f, STEP).add(x, corners[5].getHeight(), z);
+                Vector3f sv2 = new Vector3f(STEP, 0.0f, 0.0f).add(x, corners[4].getHeight(), z);
 
                 Vector3f normal0 = new Vector3f(fv1).sub(fv0).cross(new Vector3f(fv2).sub(fv0)).normalize();
                 Vector3f normal1 = new Vector3f(sv1).sub(sv0).cross(new Vector3f(sv2).sub(sv0)).normalize();
@@ -191,6 +192,12 @@ public class LevelTerrainGenerator {
     }
 
     public TerrainType getTerrainTypeAt(float x, float z) {
+        // Under the shelter on the spawn, we have basement under the ground.
+        // We must generate hole at coordinates of this basement, so it'd be possible to get underground
+        // -27 -34 -18 -26
+        if (x > -23 && x < 10 && z > -30 && z < 10)
+            return TerrainType.HOLE;
+
         PerlinNoise.Settings spawnSettings = new PerlinNoise.Settings(1, 0.5f, 0.035f, -5, 5);
         float spawnRoughness = terrainNoise.getValue(spawnSettings, x, z);
 

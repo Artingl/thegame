@@ -21,7 +21,6 @@ public class ChunkNode extends SceneNode {
         MeshComponent mesh = new MeshComponent(chunk.getMesh());
         MeshColliderComponent collider = new MeshColliderComponent(chunk.getMesh());
         RigidBodyComponent rb = new RigidBodyComponent();
-        rb.isKinematic = true;
 
         this.addComponent(mesh);;
         this.addComponent(collider);
@@ -56,8 +55,8 @@ public class ChunkNode extends SceneNode {
         }
 
         if (frustum.intersectAab(
-                new Vector3f(chunkPos.x, 0, chunkPos.y),
-                new Vector3f(chunkPos.x + Chunk.CHUNK_SIZE, 256, chunkPos.y + Chunk.CHUNK_SIZE)) >= 0) {
+                new Vector3f(chunkPos.x, -512, chunkPos.y),
+                new Vector3f(chunkPos.x + Chunk.CHUNK_SIZE, 512, chunkPos.y + Chunk.CHUNK_SIZE)) >= 0) {
             this.abortRender();
             return;
         }

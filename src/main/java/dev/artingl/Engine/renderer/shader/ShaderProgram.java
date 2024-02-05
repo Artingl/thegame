@@ -226,6 +226,13 @@ public class ShaderProgram implements IPipeline {
         return 0;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ShaderProgram shd))
+            return false;
+        return shd.programId == programId;
+    }
+
     private record TextureUniform(String uniform, int textureId) {}
 
 }

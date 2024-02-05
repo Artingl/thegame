@@ -1,25 +1,28 @@
 package dev.artingl.Engine.world.scene.components.phys;
 
 import com.jme3.bullet.PhysicsSpace;
-import com.jme3.bullet.collision.shapes.MeshCollisionShape;
+import com.jme3.bullet.collision.PhysicsCollisionObject;
 import com.jme3.bullet.control.RigidBodyControl;
-import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.math.Quaternion;
+import dev.artingl.Engine.Engine;
+import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.timer.Timer;
 import dev.artingl.Engine.world.scene.components.Component;
 import dev.artingl.Engine.world.scene.components.phys.collider.BaseColliderComponent;
 import dev.artingl.Engine.world.scene.components.phys.collider.MeshColliderComponent;
 import dev.artingl.Engine.world.scene.components.transform.TransformComponent;
+import dev.artingl.Engine.world.scene.nodes.CameraNode;
 import dev.artingl.Engine.world.scene.nodes.SceneNode;
 import org.joml.Vector3f;
 
-public class RigidBodyComponent extends Component {
+public class RigidBodyComponent extends Component implements BodyComponent {
     public boolean enableBody = true;
     public boolean isKinematic = false;
     public float mass;
 
-    private final RigidBodyControl rb;
+    private boolean outOfRangeCheck;
+    private final RigidBodyControl body;
     private Vector3f lastPos, lastRot;
 
     public RigidBodyComponent() {
@@ -28,14 +31,14 @@ public class RigidBodyComponent extends Component {
 
     public RigidBodyComponent(float mass) {
         this.mass = mass;
-        this.rb = new RigidBodyControl(mass);
+        this.body = new RigidBodyControl(mass);
     }
 
     @Override
     public void cleanup() {
         super.cleanup();
-        PhysicsSpace space = rb.getPhysicsSpace();
-        space.removeCollisionObject(rb);
+        PhysicsSpace space = body.getPhysicsSpace();
+        space.removeCollisionObject(body);
     }
 
     @Override
@@ -47,20 +50,35 @@ public class RigidBodyComponent extends Component {
         if (node == null)
             return;
 
+        // If the rigidbody is too far from the player, disable it so we won't waste time computing collisions with it
+        if (this.outOfRangeCheck) {
+            CameraNode camera = node.getScene().getMainCamera();
+            if (camera != null) {
+                float distance = camera.getPosition().distance(node.getTransform().position);
+                if (distance > 60) {
+                    this.body.setEnabled(false);
+                    return;
+                }
+            }
+        }
+
         // Set the rigidbody's shape if we have collider
         BaseColliderComponent collider = node.getComponent(BaseColliderComponent.class);
         if (collider == null || collider.getShape() == null)
             return;
 
         if (collider instanceof MeshColliderComponent) {
-            this.rb.setMass(0);
+            this.body.setMass(0);
+            this.isKinematic = true;
             this.mass = 0;
         }
-
-        this.rb.setCollisionShape(collider.getShape());
+        else {
+            this.body.setMass(this.mass);
+        }
 
         PhysicsSpace space = node.getScene().getPhysicsSpace();
-        this.rb.setPhysicsSpace(space);
+        this.body.setCollisionShape(collider.getShape());
+        this.body.setPhysicsSpace(space);
 
         this.updateBody();
     }
@@ -70,56 +88,69 @@ public class RigidBodyComponent extends Component {
         if (node == null || !enableBody) {
             this.lastRot = null;
             this.lastPos = null;
-            this.rb.setEnabled(false);
+            this.body.setEnabled(false);
             return;
         }
 
-        this.rb.setKinematic(this.isKinematic);
-        this.rb.setEnabled(true);
+        this.body.setKinematic(this.isKinematic);
+        this.body.setEnabled(true);
 
         TransformComponent transform = node.getTransform();
-        Vector3f position = Utils.jme2joml(rb.getPhysicsLocation());
+        Vector3f position = Utils.jme2joml(body.getPhysicsLocation());
         Vector3f rotation = new Vector3f(
-                (float) Math.toDegrees(rb.getPhysicsRotation().getX()) + 180,
-                (float) Math.toDegrees(rb.getPhysicsRotation().getY()) + 180,
-                (float) Math.toDegrees(rb.getPhysicsRotation().getZ()) + 180);
+                (float) Math.toDegrees(body.getPhysicsRotation().getX()) + 180,
+                (float) Math.toDegrees(body.getPhysicsRotation().getY()) + 180,
+                (float) Math.toDegrees(body.getPhysicsRotation().getZ()) + 180);
 
         if (!transform.position.equals(lastPos))
-            rb.setPhysicsLocation(Utils.joml2jme(transform.position));
+            body.setPhysicsLocation(Utils.joml2jme(transform.position));
         else transform.position = position;
 
         if (!transform.rotation.equals(lastRot))
-            rb.setPhysicsRotation(new Quaternion().fromAngles(transform.rotation.x, transform.rotation.y, transform.rotation.z));
+            body.setPhysicsRotation(new Quaternion().fromAngles(transform.rotation.x, transform.rotation.y, transform.rotation.z));
         else transform.rotation = rotation;
 
         lastPos = transform.position;
         lastRot = transform.rotation;
     }
 
-    @Override
-    public void disable() {
-        enableBody = false;
-    }
-
-    @Override
-    public void enable() {
-        enableBody = true;
-    }
-
     public void addVelocity(Vector3f vec) {
-        this.rb.setLinearVelocity(this.rb.getLinearVelocity().add(Utils.joml2jme(vec)));
+        this.body.setLinearVelocity(this.body.getLinearVelocity().add(Utils.joml2jme(vec)));
     }
 
     public void setVelocity(Vector3f vec) {
-        this.rb.setLinearVelocity(Utils.joml2jme(vec));
+        this.body.setLinearVelocity(Utils.joml2jme(vec));
     }
 
     public Vector3f getVelocity() {
-        return Utils.jme2joml(this.rb.getLinearVelocity());
+        return Utils.jme2joml(this.body.getLinearVelocity());
+    }
+
+    /**
+     * If the provided state is true, the rigidbody would be disabled if it's located too far away
+     * from the main scene's camera (the distance is higher than 60).
+     * <p>
+     * By default, the value if false
+     *
+     * @param state The state to be set
+     * */
+    public void setOutOfRangeCheck(boolean state) {
+        this.outOfRangeCheck = state;
     }
 
     @Override
     public String getName() {
-        return "Dynamic Rigid Body";
+        return "Rigid Body";
+    }
+
+    @Override
+    public boolean overlaps(BodyComponent body) {
+        Engine.getInstance().getLogger().log(LogLevel.UNIMPLEMENTED, "overlaps method in RigidBodyComponent is not implemented!");
+        return false;
+    }
+
+    @Override
+    public PhysicsCollisionObject getCollisionObject() {
+        return this.body;
     }
 }

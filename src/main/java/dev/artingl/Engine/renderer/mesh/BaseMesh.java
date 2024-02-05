@@ -25,13 +25,13 @@ import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 public class BaseMesh implements IMesh {
     public static final ShaderProgram BASE_PROGRAM = new ShaderProgram(
-            new Shader(ShaderType.VERTEX, new Resource("engine", "shaders/base_mesh.vert")),
-            new Shader(ShaderType.FRAGMENT, new Resource("engine", "shaders/base_mesh.frag"))
+            new Shader(ShaderType.VERTEX, new Resource("engine", "shaders/mesh/base_mesh.vert")),
+            new Shader(ShaderType.FRAGMENT, new Resource("engine", "shaders/mesh/base_mesh.frag"))
     );
 
     public static final ShaderProgram INSTANCED_BASE_PROGRAM = new ShaderProgram(
-            new Shader(ShaderType.VERTEX, new Resource("engine", "shaders/instanced_base_mesh.vert")),
-            new Shader(ShaderType.FRAGMENT, new Resource("engine", "shaders/base_mesh.frag"))
+            new Shader(ShaderType.VERTEX, new Resource("engine", "shaders/mesh/instanced_base_mesh.vert")),
+            new Shader(ShaderType.FRAGMENT, new Resource("engine", "shaders/mesh/base_mesh.frag"))
     );
 
     static {
@@ -49,6 +49,7 @@ public class BaseMesh implements IMesh {
     private Matrix4f modelMatrix;
     private int instancesVBO, vao, vbo, ebo;
     private float meshFade;
+    private float opacity;
     private int mode;
     private boolean isBaked;
     private boolean isDirty;
@@ -69,6 +70,7 @@ public class BaseMesh implements IMesh {
         this.ebo = -1;
         this.verticesCount = -1;
         this.indicesCount = 1;
+        this.opacity = 1;
         this.isBaked = false;
         this.isDirty = true;
         this.program = BASE_PROGRAM;
@@ -78,6 +80,20 @@ public class BaseMesh implements IMesh {
 
         if (this.vertices == null)
             this.vertices = new VerticesBuffer();
+    }
+
+    /**
+     * Set mesh's opacity
+     * */
+    public void setOpacity(float opacity) {
+        this.opacity = opacity;
+    }
+
+    /**
+     * Returns mesh's opacity
+     * */
+    public float getOpacity() {
+        return opacity;
     }
 
     /**
@@ -159,7 +175,7 @@ public class BaseMesh implements IMesh {
         if (program != null) {
             program.use();
             program.updateModelMatrix(getModelMatrix());
-            program.setUniformFloat("meshFade", MathUtils.easeInOutCirc(meshFade));
+            program.setUniformFloat("opacity", this.opacity * MathUtils.easeInOutCirc(meshFade));
 
             Viewport viewport = context.getViewport();
             viewport.uploadMatrices(program);
@@ -185,7 +201,7 @@ public class BaseMesh implements IMesh {
         // Use the shader program if we have one
         this.program = INSTANCED_BASE_PROGRAM;
         INSTANCED_BASE_PROGRAM.use();
-        INSTANCED_BASE_PROGRAM.setUniformFloat("meshFade", MathUtils.easeInOutCirc(meshFade));
+        program.setUniformFloat("opacity", this.opacity * MathUtils.easeInOutCirc(meshFade));
         Viewport viewport = context.getViewport();
         viewport.uploadMatrices(INSTANCED_BASE_PROGRAM);
 
@@ -219,8 +235,8 @@ public class BaseMesh implements IMesh {
     }
 
     @Override
-    public VerticesBuffer getBuffer() {
-        return vertices;
+    public VerticesBuffer[] getBuffer() {
+        return new VerticesBuffer[]{vertices};
     }
 
     @Override

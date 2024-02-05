@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Chunk {
 
-    public static final int CHUNK_SIZE = 32;
+    public static final int CHUNK_SIZE = 64;
     public static final int VOLUME = CHUNK_SIZE * CHUNK_SIZE;
 
     private final Vector2i position;
@@ -27,9 +27,7 @@ public class Chunk {
         this.level = level;
         this.mesh = new ChunkMesh(this, level);
         this.envObjectsList = new ConcurrentLinkedDeque<>();
-//        Engine.getInstance().getThreadsManager().submit(() -> {
-            this.level.getGenerator().generateChunk(this);
-//        });
+        this.level.getGenerator().generateChunk(this);
     }
 
     /**

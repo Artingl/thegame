@@ -11,11 +11,15 @@ public class SoundSource {
     private Dimension dimension;
     private Vector3f position;
     private int sourceId;
+    private float volume;
+    private boolean isGlobal;
+    private boolean isLooping;
 
     public SoundSource(SoundBuffer buffer, Dimension dimension, Vector3f position) {
         this.buffer = buffer;
         this.dimension = dimension;
         this.position = position;
+        this.volume = 1;
         this.sourceId = -1;
     }
 
@@ -85,8 +89,16 @@ public class SoundSource {
      * @param volume New volume value
      */
     public void setVolume(float volume) {
+        this.volume = volume;
         if (sourceId != -1)
-            alSourcef(sourceId, AL_GAIN, volume);
+            alSourcef(sourceId, AL_GAIN, this.volume);
+    }
+
+    /**
+     * Returns current sound's volume
+     * */
+    public float getVolume() {
+        return this.volume;
     }
 
     /**
@@ -107,6 +119,9 @@ public class SoundSource {
 
         // Set the sound's position and play it
         alSource3f(sourceId, AL_POSITION, pos.x, pos.y, pos.z);
+        alSourcei(sourceId, AL_SOURCE_RELATIVE, isGlobal ? 1 : 0);
+        alSourcei(sourceId, AL_LOOPING, isLooping ? 1 : 0);
+        alSourcef(sourceId, AL_GAIN, this.volume);
         alSourcePlay(sourceId);
     }
 
@@ -138,4 +153,21 @@ public class SoundSource {
         this.buffer.cleanup();
     }
 
+    /**
+     * Sets global state of the sound. Global all listeners around the whole world would be able to hear it.
+     * */
+    public void setGlobal(boolean state) {
+        this.isGlobal = state;
+        if (sourceId != -1)
+            alSourcei(sourceId, AL_SOURCE_RELATIVE, isGlobal ? 1 : 0);
+    }
+
+    /**
+     * Sets loop state of the sound.
+     * */
+    public void setLoop(boolean state) {
+        this.isLooping = state;
+        if (sourceId != -1)
+            alSourcei(sourceId, AL_LOOPING, isLooping ? 1 : 0);
+    }
 }

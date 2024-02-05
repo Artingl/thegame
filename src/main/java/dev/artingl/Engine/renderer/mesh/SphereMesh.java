@@ -32,11 +32,11 @@ public class SphereMesh extends BaseMesh {
 
                 verticesBuffer
                         .addAttribute(pos0).addAttribute(new Vector4f(1, 1, 1, 1))
-                        .addAttribute(pos1).addAttribute(new Vector4f(1, 0, 1, 1))
-                        .addAttribute(pos2).addAttribute(new Vector4f(1, 1, 0, 1))
+                        .addAttribute(pos1).addAttribute(new Vector4f(1, 1, 1, 1))
+                        .addAttribute(pos2).addAttribute(new Vector4f(1, 1, 1, 1))
 
                         .addAttribute(pos1).addAttribute(new Vector4f(1, 1, 1, 1))
-                        .addAttribute(pos3).addAttribute(new Vector4f(0, 1, 1, 1))
+                        .addAttribute(pos3).addAttribute(new Vector4f(1, 1, 1, 1))
                         .addAttribute(pos2).addAttribute(new Vector4f(1, 1, 1, 1));
             }
         }

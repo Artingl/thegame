@@ -4,6 +4,7 @@ import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.world.scene.SceneManager;
+import dev.artingl.Game.common.vm.Sedna;
 import dev.artingl.Game.registries.LevelsRegistry;
 import dev.artingl.Game.scene.MapScene;
 import dev.artingl.Game.level.Level;
@@ -31,6 +32,8 @@ public class GameDirector {
 
     public GameDirector() {
         GameDirector.instance = this;
+
+        Sedna.init();
 
         /* Initialize engine */
         this.engine = new Engine("thegame");

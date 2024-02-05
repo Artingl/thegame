@@ -13,9 +13,18 @@ public class CameraNode extends SceneNode implements IViewport {
     private float fovDelta = 0;
     private float previousFov = -1;
     private float targetFov = -1;
+    private Vector3f projectionRotation;
 
     public CameraNode() {
+        this.projectionRotation = new Vector3f();
         this.addComponent(new CameraComponent());
+    }
+
+    /**
+     * Set the rotation of the viewport's projection matrix
+     * */
+    public void setProjectionRotation(Vector3f vec) {
+        this.projectionRotation = new Vector3f(vec);
     }
 
     /**
@@ -64,6 +73,11 @@ public class CameraNode extends SceneNode implements IViewport {
     @Override
     public Vector3f getScale() {
         return getTransform().scale;
+    }
+
+    @Override
+    public Vector3f getProjectionRotation() {
+        return projectionRotation;
     }
 
     public float getFov() {

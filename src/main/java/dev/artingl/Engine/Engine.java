@@ -179,7 +179,7 @@ public class Engine implements TickListener, InputListener {
 
 //        glEnable(GL_CULL_FACE);
 //        glCullFace(GL_BACK);
-        glFrontFace(GL_CCW);
+        glFrontFace(GL_CW);
 
         this.timer.enterLoop();
     }

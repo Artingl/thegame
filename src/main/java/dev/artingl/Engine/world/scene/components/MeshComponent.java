@@ -57,22 +57,15 @@ public class MeshComponent extends Component {
                         this.mesh.setQuality(cameraDistance < 50 ? MeshQuality.POTATO : MeshQuality.NOT_RENDERED);
                     }
                     else {
-                        this.mesh.setQuality(cameraDistance < (50 + qualityMod0) ? MeshQuality.HIGH : cameraDistance < (150 + qualityMod1) ? MeshQuality.MEDIUM : cameraDistance < (250 + qualityMod2) ? MeshQuality.LOW : MeshQuality.NOT_RENDERED);
+                        this.mesh.setQuality(
+                                cameraDistance < (50 + qualityMod0) ? MeshQuality.HIGH :
+                                cameraDistance < (120 + qualityMod1) ? MeshQuality.MEDIUM :
+                                cameraDistance < (140 + qualityMod2) ? MeshQuality.LOW : MeshQuality.NOT_RENDERED);
                         this.lastCameraDistance = cameraDistance;
                     }
                 }
             }
         }
-    }
-
-    @Override
-    public void disable() {
-        enableRendering = false;
-    }
-
-    @Override
-    public void enable() {
-        enableRendering = true;
     }
 
     @Override
@@ -89,7 +82,7 @@ public class MeshComponent extends Component {
         if (mesh != null && enableRendering) {
             TransformComponent transform = node.getTransform();
 
-            if (!mesh.isBaked() | mesh.isDirty())
+            if (!mesh.isBaked() || mesh.isDirty())
                 mesh.bake();
 
             mesh.transform(transform.getMatrix());

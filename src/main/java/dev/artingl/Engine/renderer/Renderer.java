@@ -122,7 +122,7 @@ public class Renderer {
         this.eboInUse = -1;
 
         bindFramebuffer(framebuffer);
-        this.viewport.call();
+        this.viewport.update();
         this.pipeline.call();
         glUseProgram(0);
         bindFramebuffer(0);
@@ -133,7 +133,7 @@ public class Renderer {
     }
 
     public void useShader(ShaderProgram program) {
-        if (this.programInUse != program) {
+        if (!program.equals(this.programInUse)) {
             GL20C.glUseProgram(program.getProgramId());
             this.programInUse = program;
         }
