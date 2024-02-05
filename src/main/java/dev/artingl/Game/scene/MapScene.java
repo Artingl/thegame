@@ -2,23 +2,28 @@ package dev.artingl.Game.scene;
 
 import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.Utils;
-import dev.artingl.Engine.models.IModel;
+import dev.artingl.Engine.renderer.models.IModel;
 import dev.artingl.Engine.renderer.mesh.ModelMesh;
-import dev.artingl.Engine.scene.BaseScene;
-import dev.artingl.Engine.scene.components.ComponentFinalField;
-import dev.artingl.Engine.scene.components.InstancedMeshComponent;
-import dev.artingl.Engine.scene.components.collider.TerrainColliderComponent;
-import dev.artingl.Engine.scene.components.transform.InstancedTransformComponent;
-import dev.artingl.Engine.scene.components.transform.TransformComponent;
-import dev.artingl.Engine.scene.nodes.SceneNode;
+import dev.artingl.Engine.resources.Resource;
+import dev.artingl.Engine.world.audio.SoundBuffer;
+import dev.artingl.Engine.world.scene.BaseScene;
+import dev.artingl.Engine.world.scene.components.SoundComponent;
+import dev.artingl.Engine.world.scene.components.annotations.ComponentFinalField;
+import dev.artingl.Engine.world.scene.components.InstancedMeshComponent;
+import dev.artingl.Engine.world.scene.components.phys.RigidBodyComponent;
+import dev.artingl.Engine.world.scene.components.phys.collider.MeshColliderComponent;
+import dev.artingl.Engine.world.scene.components.phys.collider.SphereColliderComponent;
+import dev.artingl.Engine.world.scene.components.transform.InstancedTransformComponent;
+import dev.artingl.Engine.world.scene.components.transform.TransformComponent;
+import dev.artingl.Engine.world.scene.nodes.SceneNode;
 import dev.artingl.Engine.timer.Timer;
+import dev.artingl.Engine.world.scene.nodes.ui.UIPanelNode;
+import dev.artingl.Engine.world.scene.nodes.sprites.SphereNode;
 import dev.artingl.Game.GameDirector;
 import dev.artingl.Game.level.Level;
 import dev.artingl.Game.level.chunk.Chunk;
 import dev.artingl.Game.level.chunk.environment.EnvironmentObjects;
 import dev.artingl.Game.scene.node.*;
-import org.joml.Vector2f;
-import org.joml.Vector2i;
 import org.joml.Vector3f;
 import oshi.util.tuples.Pair;
 
@@ -35,23 +40,28 @@ public class MapScene extends BaseScene {
     public int levelCachedHeights = -1;
 
     private final SkyNode sky;
-    private final CameraControlNode cameraController;
+    private final UIPanelNode uiPanel;
+    private final PlayerControllerNode playerController;
     private final ShelterNode shelterNode;
     private final DingusNode dingusNode;
+    private final SoundComponent nightAmbientSound;
+    private final SoundComponent dayAmbientSound;
 
     public MapScene() {
         Level level = getLevel();
 
         /* Initialize and add nodes to the scene */
         this.sky = new SkyNode(level.getSky());
-        this.cameraController = new CameraControlNode();
-        this.cameraController.captureControl = false;
+        this.uiPanel = new UIPanelNode();
+        this.playerController = new PlayerControllerNode();
+        this.playerController.captureControl = false;
 
-        TransformComponent transform = this.cameraController.getTransform();
-        transform.position = new Vector3f(13, 27, 47);
-        transform.rotation = new Vector3f(60, -18, 0);
+        TransformComponent transform = this.playerController.getTransform();
+        transform.position = new Vector3f(0, 6.2f, -18);
+        transform.rotation = new Vector3f(0, 90, 0);
 
-        this.addNode(this.cameraController);
+        this.addNode(this.uiPanel);
+        this.addNode(this.playerController);
         this.addNode(this.sky);
 
         // Shelter node
@@ -61,13 +71,42 @@ public class MapScene extends BaseScene {
 
         // Dingus
         this.dingusNode = new DingusNode();
-        this.dingusNode.getTransform().position.y = 1.8f;
+        this.dingusNode.getTransform().position.y = 4f;
         this.addNode(dingusNode);
 
-        this.makeEnvironment();
-        this.makeTerrainCollider();
+        // Ambient sounds
+        SceneNode ambientSoundSource = new SceneNode();
+        this.nightAmbientSound = new SoundComponent(new SoundBuffer(new Resource("thegame", "audio/ambient_night0.ogg")));
+        this.dayAmbientSound = new SoundComponent(new SoundBuffer(new Resource("thegame", "audio/ambient_day0.ogg")));
+        ambientSoundSource.addComponent(nightAmbientSound);
+        ambientSoundSource.addComponent(dayAmbientSound);
+        this.addNode(ambientSoundSource);
 
-        getEngine().getSoundsManager().setGlobalVolume(1f);
+        // The ambient sounds should be global
+        this.nightAmbientSound.getSound().setGlobal(true);
+        this.dayAmbientSound.getSound().setGlobal(true);
+        this.nightAmbientSound.getSound().setLoop(true);
+        this.dayAmbientSound.getSound().setLoop(true);
+        this.nightAmbientSound.volume = 0;
+        this.dayAmbientSound.volume = 0;
+
+        this.makeEnvironment();
+
+        SphereNode sphere = new SphereNode(1);
+        sphere.getTransform().position.x = 5;
+        sphere.getTransform().position.y = 20;
+        sphere.getTransform().position.z = 5;
+        sphere.addComponent(new SphereColliderComponent(1));
+        sphere.addComponent(new RigidBodyComponent(0.01f));
+        this.addNode(sphere);
+
+        LaptopNode laptop = new LaptopNode();
+        laptop.getTransform().position.x = -10;
+        laptop.getTransform().position.y = 2.2f;
+        laptop.getTransform().position.z = 20;
+        this.addNode(laptop);
+
+        getEngine().getSoundsManager().setGlobalVolume(0.3f);
     }
 
     public void makeEnvironment() {
@@ -119,32 +158,6 @@ public class MapScene extends BaseScene {
         }
     }
 
-    public void makeTerrainCollider() {
-        /* Make node for the terrain (better for performance than making individual
-         * terrain colliders for each chunk) and create add terrain collider for it. */
-        int size = Chunk.CHUNK_SIZE * Level.LEVEL_SIZE;
-        SceneNode terrainCollider = new SceneNode();
-        TerrainColliderComponent collider = new TerrainColliderComponent(
-                size * 2, size * 2, false,
-                (x, z) -> {
-                    Level level = getLevel();
-                    Vector2f worldPosition = new Vector2f(x, z);
-                    Chunk chunk = level.getChunk(new Vector2i((int) worldPosition.x / Chunk.CHUNK_SIZE, (int) worldPosition.y / Chunk.CHUNK_SIZE));
-
-                    if (chunk == null) {
-                        // Invalid chunk
-                        return 0;
-                    }
-
-                    return level.getGenerator().generateTerrain(chunk, x, z).getHeight();
-                }
-        );
-
-//        terrainCollider.getTransform().position.set(-size, 0, -size);
-        terrainCollider.addComponent(collider);
-        this.addNode(terrainCollider);
-    }
-
     @Override
     public void tick(Timer timer) {
         super.tick(timer);
@@ -153,17 +166,28 @@ public class MapScene extends BaseScene {
         this.sky.getTransform().rotation.z = getLevel().getSky().getSunRotation();
 
         // Set sky node position relative to current camera position
-        this.sky.getTransform().position = this.cameraController.getTransform().position;
+        this.sky.getTransform().position = this.playerController.getTransform().position;
 
         this.getLevel().getSky().setColor(Color.from("#5b88b5"));
         this.getLevel().setTimeSpeed(timeSpeed);
 
-        // ...
+        // To know what ambient sound to play (night or day) we can look at current light level,
+        // which would be 0 at night and 1 at day
+        float nightMultiplier = Math.max(0, Math.min(1, 1 -  (getLevel().getLightLevel()*2)));
+        float dayMultiplier = Math.max(0, Math.min(1, getLevel().getLightLevel()*2));
+
+        // Adjust ambient sound whether the player is inside shelter or outside
+        float volumeChangeSpeed = 3 / timer.getTickPerSecond();
+        float targetAmbientVolume = shelterNode.isPlayerInside() ? 0.01f : 0.6f;
+        this.nightAmbientSound.volume = (this.nightAmbientSound.volume + (targetAmbientVolume - this.nightAmbientSound.volume) * volumeChangeSpeed) * nightMultiplier;
+        this.dayAmbientSound.volume = (this.dayAmbientSound.volume + (targetAmbientVolume - this.dayAmbientSound.volume) * volumeChangeSpeed) * dayMultiplier;
+
+        // For debugger
         this.terrainType = getLevel()
                 .getGenerator()
                 .getTerrainTypeAt(
-                        cameraController.getTransform().position.x,
-                        cameraController.getTransform().position.z
+                        playerController.getTransform().position.x,
+                        playerController.getTransform().position.z
                 ).name();
         this.levelCachedHeights = getLevel().getGenerator().getCacheSize();
     }
@@ -171,5 +195,13 @@ public class MapScene extends BaseScene {
     private Level getLevel() {
         GameDirector director = GameDirector.getInstance();
         return director.getLevelsRegistry().getCurrentLevel();
+    }
+
+    public PlayerControllerNode getPlayerController() {
+        return playerController;
+    }
+
+    public ShelterNode getShelter() {
+        return shelterNode;
     }
 }

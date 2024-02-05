@@ -36,6 +36,10 @@ public interface Terrain {
             case SPAWN -> {
                 return new SpawnTerrain();
             }
+
+            case HOLE -> {
+                return new HoleTerrain();
+            }
         }
 
         GameDirector.getInstance().getLogger().log(LogLevel.ERROR, "Invalid terrain type " + type);

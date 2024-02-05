@@ -1,6 +1,6 @@
 package dev.artingl.Engine.renderer.mesh;
 
-import dev.artingl.Engine.texture.Texture;
+import dev.artingl.Engine.resources.texture.Texture;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;

@@ -5,7 +5,6 @@ import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.renderer.RenderContext;
-import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.BaseMesh;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Engine.renderer.pipeline.IPipeline;
@@ -14,7 +13,7 @@ import dev.artingl.Engine.renderer.shader.Shader;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import dev.artingl.Engine.renderer.shader.ShaderType;
 import dev.artingl.Engine.resources.Resource;
-import dev.artingl.Engine.texture.Texture;
+import dev.artingl.Engine.resources.texture.Texture;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 

@@ -1,8 +1,10 @@
 package dev.artingl.Game.scene.node;
 
 import dev.artingl.Engine.renderer.RenderContext;
-import dev.artingl.Engine.scene.components.MeshComponent;
-import dev.artingl.Engine.scene.nodes.SceneNode;
+import dev.artingl.Engine.world.scene.components.MeshComponent;
+import dev.artingl.Engine.world.scene.components.phys.RigidBodyComponent;
+import dev.artingl.Engine.world.scene.components.phys.collider.MeshColliderComponent;
+import dev.artingl.Engine.world.scene.nodes.SceneNode;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Game.level.chunk.Chunk;
 import org.joml.FrustumIntersection;
@@ -17,13 +19,12 @@ public class ChunkNode extends SceneNode {
         this.chunk = chunk;
 
         MeshComponent mesh = new MeshComponent(chunk.getMesh());
-//        TerrainColliderComponent collider = new TerrainColliderComponent(
-//                Chunk.CHUNK_SIZE, Chunk.CHUNK_SIZE,
-//                (x, z) -> chunk.getGenerator().getHeight(chunk.getPositionLevel().x + x, chunk.getPositionLevel().y + z)
-//        );
+        MeshColliderComponent collider = new MeshColliderComponent(chunk.getMesh());
+        RigidBodyComponent rb = new RigidBodyComponent();
 
-        this.addComponent(mesh);
-//        this.addComponent(collider);
+        this.addComponent(mesh);;
+        this.addComponent(collider);
+        this.addComponent(rb);
     }
 
     /**
@@ -54,8 +55,8 @@ public class ChunkNode extends SceneNode {
         }
 
         if (frustum.intersectAab(
-                new Vector3f(chunkPos.x, 0, chunkPos.y),
-                new Vector3f(chunkPos.x + Chunk.CHUNK_SIZE, 256, chunkPos.y + Chunk.CHUNK_SIZE)) >= 0) {
+                new Vector3f(chunkPos.x, -512, chunkPos.y),
+                new Vector3f(chunkPos.x + Chunk.CHUNK_SIZE, 512, chunkPos.y + Chunk.CHUNK_SIZE)) >= 0) {
             this.abortRender();
             return;
         }

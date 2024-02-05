@@ -2,10 +2,9 @@ package dev.artingl.Game.level;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.misc.Utils;
-import dev.artingl.Engine.scene.BaseScene;
-import dev.artingl.Engine.timer.ITick;
+import dev.artingl.Engine.world.scene.BaseScene;
+import dev.artingl.Engine.timer.TickListener;
 import dev.artingl.Engine.timer.Timer;
-import dev.artingl.Game.GameDirector;
 import dev.artingl.Game.level.ambient.Sky;
 import dev.artingl.Game.level.chunk.Chunk;
 import org.jetbrains.annotations.Nullable;
@@ -16,14 +15,14 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Level implements ITick {
+public class Level implements TickListener {
 
     public static final int SUN_CYCLE_TICKS = 128 * 12 * 60;
     public static final int MOON_CYCLE_TICKS = 128 * 25 * 60;
     public static final int DAY_CYCLE_TICKS = MOON_CYCLE_TICKS + SUN_CYCLE_TICKS;
 
     // Chunks each direction
-    public static final int LEVEL_SIZE = 8;//16;
+    public static final int LEVEL_SIZE = 4;//8;//16;
 
     private final Map<Vector2i, Chunk> chunks;
     private final LevelTerrainGenerator generator;

@@ -4,6 +4,7 @@ import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.renderer.RenderContext;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.BaseMesh;
+import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Engine.renderer.shader.Shader;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import dev.artingl.Engine.renderer.shader.ShaderType;

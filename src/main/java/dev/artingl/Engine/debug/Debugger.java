@@ -1,9 +1,9 @@
 package dev.artingl.Engine.debug;
 
-import dev.artingl.Engine.scene.SceneManager;
-import dev.artingl.Engine.scene.components.ComponentFinalField;
-import dev.artingl.Engine.scene.components.ComponentIgnoreField;
-import dev.artingl.Engine.scene.components.ComponentInformation;
+import dev.artingl.Engine.world.scene.SceneManager;
+import dev.artingl.Engine.world.scene.components.annotations.ComponentFinalField;
+import dev.artingl.Engine.world.scene.components.annotations.ComponentIgnoreField;
+import dev.artingl.Engine.world.scene.components.annotations.ComponentInformation;
 import dev.artingl.Engine.resources.Options;
 import dev.artingl.Engine.Display;
 import dev.artingl.Engine.Engine;
@@ -14,14 +14,14 @@ import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.IMesh;
 import dev.artingl.Engine.renderer.pipeline.IPipeline;
 import dev.artingl.Engine.renderer.pipeline.PipelineInstance;
-import dev.artingl.Engine.scene.BaseScene;
-import dev.artingl.Engine.scene.components.Component;
-import dev.artingl.Engine.scene.nodes.CameraNode;
-import dev.artingl.Engine.scene.nodes.SceneNode;
-import dev.artingl.Engine.scene.nodes.sprites.SquareNode;
+import dev.artingl.Engine.world.scene.BaseScene;
+import dev.artingl.Engine.world.scene.components.Component;
+import dev.artingl.Engine.world.scene.nodes.CameraNode;
+import dev.artingl.Engine.world.scene.nodes.SceneNode;
+import dev.artingl.Engine.world.scene.nodes.sprites.SquareNode;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.resources.Resource;
-import dev.artingl.Engine.texture.TextureManager;
+import dev.artingl.Engine.resources.texture.TextureManager;
 import dev.artingl.Engine.timer.Timer;
 import dev.artingl.Engine.ui.FontAwesomeIcons;
 import imgui.ImFontGlyphRangesBuilder;
@@ -40,9 +40,6 @@ import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
-import org.ode4j.math.DVector3;
-import org.ode4j.ode.DSpace;
-import org.ode4j.ode.DWorld;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -106,9 +103,6 @@ public class Debugger implements IPipeline {
         SceneManager sceneRegistry = engine.getSceneManager();
         BaseScene currentScene = sceneRegistry.getCurrentScene();
 
-        DWorld world = currentScene.getWorld();
-        DSpace space = currentScene.getSpace();
-
         // Window with information about current scene
         if (ImGui.begin("Main", ImGuiWindowFlags.AlwaysAutoResize)) {
             // List with all available scenes
@@ -127,11 +121,8 @@ public class Debugger implements IPipeline {
             ImGui.text("Nodes: " + currentScene.getNodes().size());
             ImGui.separator();
 
-            DVector3 gravity = new DVector3();
-            world.getGravity(gravity);
-
-            ImGui.text("Geometry objects: " + space.getNumGeoms());
-            ImGui.text("Gravity: " + gravity.get0() + ", " + gravity.get1() + ", " + gravity.get2());
+            ImGui.text("Geometry objects: undefined");
+            ImGui.text("Gravity: undefined");
             ImGui.separator();
 
             drawSceneInterface(currentScene);
@@ -229,16 +220,19 @@ public class Debugger implements IPipeline {
     }
 
     public void drawSceneNode(SceneNode node, int depth) {
+        if (node == null)
+            return;
+
         // TODO: remove this
         if (node.getNametag().startsWith("Chunk"))
             return;
 
-        if (ImGui.selectable((" ".repeat(depth*2)) + node.getNametag(), selectedNode == node)) {
+        if (ImGui.selectable((" ".repeat(depth * 2)) + node.getNametag(), selectedNode == node)) {
             selectedNode = node;
         }
 
         // Draw all node's children
-        for (SceneNode child: node.getChildrenNodes()) {
+        for (SceneNode child : node.getChildrenNodes()) {
             drawSceneNode(child, depth + 1);
         }
     }

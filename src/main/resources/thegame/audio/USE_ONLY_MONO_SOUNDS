@@ -1,0 +1,1 @@
+ffmpeg -i stereo.ogg -ac 1 mono.ogg

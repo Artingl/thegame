@@ -1,29 +1,58 @@
 package dev.artingl.Game.scene.node;
 
+import com.jme3.scene.Mesh;
+import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.renderer.mesh.ModelMesh;
-import dev.artingl.Engine.scene.nodes.sprites.SpriteNode;
+import dev.artingl.Engine.world.scene.BaseScene;
+import dev.artingl.Engine.world.scene.components.MeshComponent;
+import dev.artingl.Engine.world.scene.components.phys.BodyComponent;
+import dev.artingl.Engine.world.scene.components.phys.GhostBodyComponent;
+import dev.artingl.Engine.world.scene.components.phys.RigidBodyComponent;
+import dev.artingl.Engine.world.scene.components.phys.collider.BoxColliderComponent;
+import dev.artingl.Engine.world.scene.components.phys.collider.MeshColliderComponent;
+import dev.artingl.Engine.world.scene.components.transform.TransformComponent;
+import dev.artingl.Engine.world.scene.nodes.SceneNode;
+import dev.artingl.Engine.world.scene.nodes.sprites.SpriteNode;
+import dev.artingl.Game.scene.MapScene;
 import dev.artingl.Game.scene.Models;
+import org.joml.Vector3f;
 
 public class ShelterNode extends SpriteNode {
 
     public ShelterNode() {
         super(new ModelMesh(Models.SHELTER));
+        this.addComponent(new MeshColliderComponent(getMesh()));
+        this.addComponent(new RigidBodyComponent());
 
-        // Floor collider
-//        BoxColliderComponent floorCollider = new BoxColliderComponent(new Vector3f(44.594f, 1.3f, 69.211f));
-//        floorCollider.setOffset(new Vector3f(0, 0.7f, 0));
+        MeshComponent meshComponent = getComponent(MeshComponent.class);
+        ((ModelMesh)meshComponent.mesh).toggleFade(false);
+    }
 
-        // Wall 0 collider
-//        BoxColliderComponent wall0Collider = new BoxColliderComponent(new Vector3f(2.12f, 71.5f, 12f));
-//        floorCollider.setOffset(new Vector3f(-22, -0.23f, 5.48f));
-//
-//        RigidBodyComponent rb = new RigidBodyComponent();
-//        rb.enableBody = false;
-//        rb.enableRotation = false;
+    @Override
+    public void init() throws EngineException {
+        super.init();
 
-//        this.addComponent(floorCollider);
-//        this.addComponent(wall0Collider);
-//        this.addComponent(rb);
+        for (int z = 31; z > 0; z -= 6) {
+            ServerNode server = new ServerNode();
+            server.getTransform().position.x = -24;
+            server.getTransform().position.y = 1;
+            server.getTransform().position.z = z;
+            this.getScene().addChild(this, server);
+        }
+    }
+
+    public boolean isPlayerInside() {
+        BaseScene scene = getScene();
+
+        // The player node should be on the map scene, and we expect shelter node to be only on that scene
+        if (scene instanceof MapScene map) {
+            PlayerControllerNode player = map.getPlayerController();
+            TransformComponent playerTransform = player.getTransform();
+            return playerTransform.position.x > -30 && playerTransform.position.x < 30
+                    && playerTransform.position.z > -38 && playerTransform.position.z < 38;
+        }
+
+        return false;
     }
 
 }

@@ -2,7 +2,7 @@ package dev.artingl.Engine.renderer.pipeline;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
-import dev.artingl.Engine.IEngineEvent;
+import dev.artingl.Engine.EngineEventListener;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.renderer.RenderContext;
@@ -11,7 +11,7 @@ import dev.artingl.Engine.renderer.Renderer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PipelineManager implements IEngineEvent {
+public class PipelineManager implements EngineEventListener {
     private final Logger logger;
 
     private final List<PipelineInstance> pipelineList;

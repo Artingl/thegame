@@ -5,7 +5,6 @@ import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.MathUtils;
 import dev.artingl.Engine.renderer.RenderContext;
 import dev.artingl.Engine.renderer.Renderer;
-import dev.artingl.Engine.renderer.mesh.BaseMesh;
 import dev.artingl.Engine.renderer.mesh.SphereMesh;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Engine.renderer.shader.Shader;
@@ -14,12 +13,8 @@ import dev.artingl.Engine.renderer.shader.ShaderType;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.renderer.viewport.Viewport;
 import dev.artingl.Engine.resources.Resource;
-import dev.artingl.Game.GameDirector;
 import dev.artingl.Game.level.Level;
-import dev.artingl.Game.level.chunk.Chunk;
 import org.joml.Vector3f;
-
-import static org.lwjgl.opengl.GL11C.GL_LINES;
 
 public class SkyMesh extends SphereMesh {
 
