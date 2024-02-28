@@ -50,6 +50,10 @@ public class Utils {
         return rand.nextInt((max - min) + 1) + min;
     }
 
+    public static int randInt() {
+        return randInt(-0xfffff, 0xfffff);
+    }
+
     public static float[] wrapVector(Vector3f v) {
         return new float[]{v.x, v.y, v.z};
     }

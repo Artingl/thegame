@@ -32,6 +32,7 @@ public class RigidBodyComponent extends Component implements BodyComponent {
     public RigidBodyComponent(float mass) {
         this.mass = mass;
         this.body = new RigidBodyControl(mass);
+        this.body.setUserObject(this);
     }
 
     @Override

@@ -6,13 +6,17 @@ import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.debug.Profiler;
+import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.renderer.mesh.MeshManager;
 import dev.artingl.Engine.renderer.pipeline.IPipeline;
 import dev.artingl.Engine.renderer.pipeline.PipelineManager;
 import dev.artingl.Engine.renderer.postprocessing.Postprocessing;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
+import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.renderer.viewport.Viewport;
 import dev.artingl.Engine.resources.Options;
+import dev.artingl.Engine.world.scene.components.CameraComponent;
+import dev.artingl.Engine.world.scene.nodes.CameraNode;
 import org.lwjgl.opengl.GL20C;
 
 import static org.lwjgl.opengl.GL11.GL_CLAMP;
@@ -31,6 +35,7 @@ public class Renderer {
     private final Viewport viewport;
     private final Postprocessing postprocessing;
     private final MeshManager meshManager;
+    private final FontManager fontManager;
     private ShaderProgram programInUse;
     private int vaoInUse;
     private int eboInUse;
@@ -45,6 +50,7 @@ public class Renderer {
         this.pipeline = new PipelineManager(this.logger, this);
         this.postprocessing = new Postprocessing(this.logger);
         this.meshManager = new MeshManager(this.logger, this);
+        this.fontManager = new FontManager(this.logger, this);
         this.isWireframeEnabled = false;
 
 //        this.pipeline.append(this.postprocessing);
@@ -52,6 +58,7 @@ public class Renderer {
 
     public void create() throws EngineException {
         this.pipeline.init();
+        this.fontManager.init();
 
         Display display = Engine.getInstance().getDisplay();
         int width = display.getWidth();
@@ -84,12 +91,15 @@ public class Renderer {
             throw new EngineException("Bad framebuffer status: " + status);
 
         this.meshManager.init();
+        this.postprocessing.init();
     }
 
     public void terminate() {
         glDeleteBuffers(this.depthBuffer);
         glDeleteTextures(this.renderTexture);
         glDeleteFramebuffers(this.framebuffer);
+        this.postprocessing.cleanup();
+        this.fontManager.cleanup();
         this.pipeline.cleanup();
         this.meshManager.cleanup();
     }
@@ -102,15 +112,6 @@ public class Renderer {
     public void pipelineAdd(IPipeline instance) {
         this.logger.log(LogLevel.INFO, "Appending new interface to the pipeline: %s", instance.toString());
         this.pipeline.append(instance);
-
-        // Move postprocessing instance to the end of the pipeline
-        this.pipeline.makeLast(this.postprocessing);
-
-        // If debugger is enabled move it to the end of the pipeline so it will render on top of everything
-        // TODO: BAD
-        Engine engine = Engine.getInstance();
-        if (engine.getOptions().getBoolean(Options.Values.DEBUG))
-            this.pipeline.makeLast(engine.getDebugger());
     }
 
     /**
@@ -121,11 +122,20 @@ public class Renderer {
         this.vaoInUse = -1;
         this.eboInUse = -1;
 
+        if (isWireframeEnabled)
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        else
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
         bindFramebuffer(framebuffer);
         this.viewport.update();
+        this.viewport.clear();
         this.pipeline.call();
         glUseProgram(0);
         bindFramebuffer(0);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+//        this.postprocessing.render(pipeline.getRenderContext());
     }
 
     public Viewport getViewport() {
@@ -137,6 +147,10 @@ public class Renderer {
             GL20C.glUseProgram(program.getProgramId());
             this.programInUse = program;
         }
+    }
+
+    public FontManager getFontManager() {
+        return fontManager;
     }
 
     public ShaderProgram getCurrentProgram() {
@@ -160,6 +174,9 @@ public class Renderer {
     }
 
     public void drawCall(DrawCall type, int array, int mode, int count) {
+        if (array <= 0 || mode <= 0 || count <= 0)
+            return;
+
         switch (type) {
             case ARRAYS -> {
                 if (array != this.vaoInUse) {
@@ -185,6 +202,9 @@ public class Renderer {
     }
 
     public void drawCallInstanced(DrawCall type, int array, int mode, int count, int n) {
+        if (array <= 0 || mode <= 0 || count <= 0 || n <= 0)
+            return;
+
         switch (type) {
             case ARRAYS -> {
                 if (array != this.vaoInUse) {
@@ -237,21 +257,21 @@ public class Renderer {
      * Updates wireframe start
      *
      * @param state New state to be set
-     * */
+     */
     public void setWireframe(boolean state) {
         this.isWireframeEnabled = state;
     }
 
     /**
      * Tells is wireframe currently enabled
-     * */
+     */
     public boolean isWireframeEnabled() {
         return isWireframeEnabled;
     }
 
     /**
      * Get post-process controller
-     * */
+     */
     public Postprocessing getPostprocessing() {
         return this.postprocessing;
     }

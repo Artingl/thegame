@@ -8,8 +8,11 @@ import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.input.InputListener;
 import dev.artingl.Engine.input.Input;
+import dev.artingl.Engine.misc.Color;
+import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.world.Dimension;
 import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.world.scene.components.CameraComponent;
 import dev.artingl.Engine.world.scene.nodes.CameraNode;
 import dev.artingl.Engine.world.scene.nodes.SceneNode;
 import dev.artingl.Engine.renderer.viewport.Viewport;
@@ -29,6 +32,7 @@ public class BaseScene implements TickListener, InputListener {
     private final Collection<SceneNode> lazyNodes;
     private final Dimension dimension;
     private final PhysicsSpace physicsSpace;
+    private final CameraNode uiCamera;
 
     private CameraNode mainCamera;
     private boolean isInitialized;
@@ -43,6 +47,12 @@ public class BaseScene implements TickListener, InputListener {
 
         this.physicsSpace = new PhysicsSpace();
         this.physicsSpace.setGravity(new Vector3f(0, -14f, 0));
+
+        this.uiCamera = new CameraNode();
+        CameraComponent camera = this.uiCamera.getComponent(CameraComponent.class);
+        camera.type = IViewport.Type.ORTHOGRAPHIC;
+        camera.farPlane = 1000;
+        camera.backgroundColor = Color.BLACK;
     }
 
     /**
@@ -88,7 +98,7 @@ public class BaseScene implements TickListener, InputListener {
         this.nodesList.put(node.getUUID(), node);
         this.lazyNodes.add(node);
 
-        // Try to set the node as main camera if we don't have
+        // Try to set the node as main camera if we don't have any
         if (mainCamera == null && node instanceof CameraNode cam) {
             this.setMainCamera(cam);
         }
@@ -107,10 +117,11 @@ public class BaseScene implements TickListener, InputListener {
         if (node != null) {
             child.attach(makeNametag(child), this, node);
             node.addChild(child.getUUID());
+            child.setLayer(node.getLayer());
             this.nodesList.put(child.getUUID(), child);
             this.lazyNodes.add(child);
 
-            // Try to set the node as main camera if we don't have
+            // Try to set the node as main camera if we don't have any
             if (mainCamera == null && node instanceof CameraNode cam) {
                 this.setMainCamera(cam);
             }
@@ -145,7 +156,7 @@ public class BaseScene implements TickListener, InputListener {
             }
 
             // Cleanup, detach the node and remove from the node's list
-            node.cleanup();
+            getEngine().glContext(node::cleanup);
             node.detach();
             this.nodesList.remove(node.getUUID());
 
@@ -259,12 +270,35 @@ public class BaseScene implements TickListener, InputListener {
             return;
         }
 
-        // Render nodes
-        List<SceneNode> sortedNodes = new ArrayList<>(nodesList.values());
-        sortedNodes.sort(new SceneNodesSorter(mainCamera));
+        synchronized (this.nodesList) {
+            // Render nodes
+            List<SceneNode> sortedNodes = new ArrayList<>(nodesList.values());
+//        sortedNodes.sort(new SceneNodesSorter(mainCamera));
 
-        for (SceneNode node: sortedNodes) {
-            node.render(context);
+            // TODO: make more efficient way of iterating through nodes
+
+            // Firstly render all nodes on the main layer
+            for (SceneNode node : sortedNodes) {
+                if (node.getLayer() == Layers.MAIN)
+                    node.render(context);
+            }
+
+            // Then render the UI layer with proper 2D camera
+            Viewport viewport = context.getViewport();
+            viewport.setViewport(this.uiCamera);
+            viewport.update();
+            for (SceneNode node : sortedNodes) {
+                // Make sure the child node has the same layer as the parent
+                if (node.getParent() != null)
+                    node.setLayer(node.getParent().getLayer());
+
+                if (node.getLayer() == Layers.UI)
+                    node.render(context);
+            }
+
+            // Set the back the main camera
+            viewport.setViewport(this.mainCamera);
+            viewport.update();
         }
 
         this.render(context);
@@ -293,8 +327,11 @@ public class BaseScene implements TickListener, InputListener {
         for (SceneNode node: nodesList.values())
             node.tick(timer);
 
-        this.physicsSpace.update(1 / timer.getTickPerSecond());
-        this.physicsSpace.distributeEvents();
+//        this.physicsSpace.setMaxSubSteps(1);
+        synchronized (this.nodesList) {
+            this.physicsSpace.update(1 / timer.getTickPerSecond());
+            this.physicsSpace.distributeEvents();
+        }
     }
 
     @Override
@@ -311,5 +348,9 @@ public class BaseScene implements TickListener, InputListener {
 
     @Override
     public void mouseMoveEvent(Input input, float x, float y) {
+    }
+
+    public enum Layers {
+        MAIN, UI
     }
 }

@@ -9,21 +9,18 @@ import dev.artingl.Engine.Display;
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.Utils;
-import dev.artingl.Engine.renderer.RenderContext;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.IMesh;
-import dev.artingl.Engine.renderer.pipeline.IPipeline;
-import dev.artingl.Engine.renderer.pipeline.PipelineInstance;
 import dev.artingl.Engine.world.scene.BaseScene;
 import dev.artingl.Engine.world.scene.components.Component;
 import dev.artingl.Engine.world.scene.nodes.CameraNode;
 import dev.artingl.Engine.world.scene.nodes.SceneNode;
-import dev.artingl.Engine.world.scene.nodes.sprites.SquareNode;
+import dev.artingl.Engine.world.scene.nodes.sprites.SquareSprite;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.resources.texture.TextureManager;
 import dev.artingl.Engine.timer.Timer;
-import dev.artingl.Engine.ui.FontAwesomeIcons;
+import dev.artingl.Engine.misc.FontAwesomeIcons;
 import imgui.ImFontGlyphRangesBuilder;
 import imgui.ImGui;
 import imgui.ImGuiIO;
@@ -45,7 +42,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Debugger implements IPipeline {
+public class Debugger {
 
     // Imgui
     private ImGuiImplGl3 glImpl;
@@ -54,14 +51,14 @@ public class Debugger implements IPipeline {
     // Debug variables
     private SceneNode selectedNode = null;
 
-    @Override
-    public void pipelineCleanup(PipelineInstance instance) {
-        this.glfwImpl.dispose();
-        this.glImpl.dispose();
+    public void cleanup() {
+        if (this.glfwImpl != null)
+            this.glfwImpl.dispose();
+        if (this.glImpl != null)
+            this.glImpl.dispose();
     }
 
-    @Override
-    public void pipelineInit(PipelineInstance instance) {
+    public void init() {
         ImGui.createContext();
 
         this.glImpl = new ImGuiImplGl3();
@@ -86,8 +83,7 @@ public class Debugger implements IPipeline {
         rangesBuilder.addRanges(FontAwesomeIcons._IconRange);
     }
 
-    @Override
-    public void pipelineRender(RenderContext renderContext, PipelineInstance instance) {
+    public void frame() {
         this.glImpl.updateFontsTexture();
         this.glfwImpl.newFrame();
         ImGui.newFrame();
@@ -95,7 +91,7 @@ public class Debugger implements IPipeline {
 
         Engine engine = Engine.getInstance();
         Renderer renderer = engine.getRenderer();
-        TextureManager textureManager = engine.getTextureManager();
+        TextureManager textureManager = engine.getResourceManager().getTextureManager();
         Profiler profiler = engine.getProfiler();
         Timer timer = engine.getTimer();
         Display display = engine.getDisplay();
@@ -148,7 +144,7 @@ public class Debugger implements IPipeline {
                     }
 
                     if (ImGui.menuItem("Add Square")) {
-                        selectedNode = new SquareNode();
+                        selectedNode = new SquareSprite();
                         currentScene.addNode(selectedNode);
                     }
 
@@ -214,17 +210,12 @@ public class Debugger implements IPipeline {
         glImpl.renderDrawData(ImGui.getDrawData());
     }
 
-    @Override
-    public int pipelineFlags() {
-        return Flags.RENDER_DIRECTLY;
-    }
-
     public void drawSceneNode(SceneNode node, int depth) {
         if (node == null)
             return;
 
         // TODO: remove this
-        if (node.getNametag().startsWith("Chunk"))
+        if (node.getNametag().startsWith("Chunk"))// && !node.getTransform().position.equals(64, 0, 0))
             return;
 
         if (ImGui.selectable((" ".repeat(depth * 2)) + node.getNametag(), selectedNode == node)) {
@@ -247,6 +238,7 @@ public class Debugger implements IPipeline {
     private void drawComponentsInterface(SceneNode node, BaseScene scene) {
         ImGui.text(node.getNametag());
         ImGui.text("UUID: " + node.getUUID());
+        ImGui.text("LAYER: " + node.getLayer());
         ImGui.text("PARENT: " + (node.getParent() == null ? null : node.getParent().getUUID()));
 
         // Draw properties for the node itself
@@ -255,10 +247,18 @@ public class Debugger implements IPipeline {
         }
 
         List<String> drawnFields = new ArrayList<>();
+        List<String> components = new ArrayList<>();
 
         for (Component component : node.getComponents()) {
-            if (ImGui.collapsingHeader(component.getName())) {
+            String name = component.getName();
+            int i = 1;
 
+            while (components.contains(name)) {
+                name = component.getName() + " (" + i++ + ")";
+            }
+
+            components.add(name);
+            if (ImGui.collapsingHeader(name)) {
                 // Render properties for all known fields
                 for (Field field : component.getClass().getFields()) {
                     if (drawnFields.contains(field.getName()))
@@ -306,12 +306,29 @@ public class Debugger implements IPipeline {
             if (value instanceof Integer) result = drawElement(canEdit, name, (Integer) value);
             if (value instanceof Boolean) result = drawElement(canEdit, name, (Boolean) value);
             if (value instanceof Double) result = drawElement(canEdit, name, (Double) value);
+            if (clazz.isEnum()) result = drawEnum((Enum<?>) value);
 
             if (result != null)
                 field.set(parent, result);
 
         } catch (IllegalAccessException ignored) {
         }
+    }
+
+    private Object drawEnum(Enum<?> e) {
+        Object result = e;
+        if (ImGui.beginCombo(e.getDeclaringClass().getSimpleName(), e.name())) {
+            for(Field field: e.getDeclaringClass().getFields()) {
+                boolean selected = field.getName().equals(e.name());
+                if (ImGui.selectable(field.getName(), selected)) {
+                    result = Enum.valueOf(e.getDeclaringClass(), field.getName());
+                    break;
+                }
+            }
+            ImGui.endCombo();
+        }
+
+        return result;
     }
 
     private Object drawElement(String name, Color v) {

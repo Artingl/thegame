@@ -14,10 +14,16 @@ public class CameraNode extends SceneNode implements IViewport {
     private float previousFov = -1;
     private float targetFov = -1;
     private Vector3f projectionRotation;
+    private CameraComponent camera;
 
     public CameraNode() {
         this.projectionRotation = new Vector3f();
-        this.addComponent(new CameraComponent());
+        this.camera = new CameraComponent();
+        this.addComponent(camera);
+    }
+
+    public CameraComponent getCamera() {
+        return camera;
     }
 
     /**
@@ -100,13 +106,13 @@ public class CameraNode extends SceneNode implements IViewport {
     }
 
     @Override
-    public float getZNear() {
-        return ((CameraComponent) getComponent(CameraComponent.class)).zNear;
+    public float getNearPlane() {
+        return ((CameraComponent) getComponent(CameraComponent.class)).nearPlane;
     }
 
     @Override
-    public float getZFar() {
-        return ((CameraComponent) getComponent(CameraComponent.class)).zFar;
+    public float getFarPlane() {
+        return ((CameraComponent) getComponent(CameraComponent.class)).farPlane;
     }
 
     @Override

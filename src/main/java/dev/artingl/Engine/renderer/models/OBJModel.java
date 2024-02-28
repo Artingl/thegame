@@ -76,7 +76,7 @@ public class OBJModel implements IModel {
 
             VerticesBuffer buffer = new VerticesBuffer(
                     VerticesBuffer.Attribute.VEC3F,
-                    VerticesBuffer.Attribute.VEC4F,
+                    VerticesBuffer.Attribute.VEC3F,
                     VerticesBuffer.Attribute.VEC2F
             );
 
@@ -115,13 +115,12 @@ public class OBJModel implements IModel {
                     for (OBJDataReference reference : face.getReferences()) {
                         OBJVertex vertex = model.getVertex(reference);
                         Vector3f position = new Vector3f(vertex.x, vertex.y, vertex.z);
-                        Vector4f color = new Vector4f(1, 1, 1, 1);
+                        Vector3f normal = new Vector3f(0, 0, 0);
                         Vector2f uv = new Vector2f();
 
                         if (reference.hasNormalIndex()) {
-                            OBJNormal normal = model.getNormal(reference);
-                            float clr = Math.min(1, 1 - (Math.abs(normal.x + normal.z) / 2));
-                            color = new Vector4f(1 * clr, 1 * clr, 1 * clr, 1);
+                            OBJNormal verNormal = model.getNormal(reference);
+                            normal.set(verNormal.x, verNormal.y, verNormal.z);
                         }
                         if (reference.hasTexCoordIndex()) {
                             OBJTexCoord texCoord = model.getTexCoord(reference);
@@ -129,7 +128,7 @@ public class OBJModel implements IModel {
                         }
 
                         buffer.addAttribute(position);
-                        buffer.addAttribute(color);
+                        buffer.addAttribute(normal);
                         buffer.addAttribute(uv);
                     }
                 }
@@ -149,7 +148,7 @@ public class OBJModel implements IModel {
 
     @Override
     public Texture getTexture(String mesh) {
-        TextureManager textureManager = Engine.getInstance().getTextureManager();
+        TextureManager textureManager = Engine.getInstance().getResourceManager().getTextureManager();
         return textureManager.getTexture(resource.relative(mesh));
     }
 
@@ -202,5 +201,10 @@ public class OBJModel implements IModel {
         for (String name: this.meshNames) {
             this.meshes.put(name, new VerticesBuffer[MeshQuality.values().length-1]);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "OBJModel{resource=" + this.resource + "}";
     }
 }

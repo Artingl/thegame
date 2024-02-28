@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Timer {
 
-    private final float tickPerSecond;
+    private float tickPerSecond;
     private long lastTime;
     private int ticks;
     private float timeScale = 1.0F;
@@ -47,6 +47,10 @@ public class Timer {
 
     public float getTickPerSecond() {
         return tickPerSecond;
+    }
+
+    public void setTickPerSecond(float tickPerSecond) {
+        this.tickPerSecond = tickPerSecond;
     }
 
     public void subscribe(TickListener tick) {

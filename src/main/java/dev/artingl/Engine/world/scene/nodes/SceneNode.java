@@ -26,22 +26,46 @@ public class SceneNode implements TickListener {
     private BaseScene scene;
     private SceneNode parent;
     private String nametag;
+    private BaseScene.Layers layer;
 
     public boolean isEnabled;
 
     public SceneNode() {
         // Generate unique id for the node
-        this(UUID.randomUUID());
+        this(BaseScene.Layers.MAIN, UUID.randomUUID());
+    }
+
+    public SceneNode(BaseScene.Layers layer) {
+        this(layer, UUID.randomUUID());
     }
 
     public SceneNode(UUID uuid) {
+        this(BaseScene.Layers.MAIN, uuid);
+    }
+
+    public SceneNode(BaseScene.Layers layer, UUID uuid) {
         this.uuid = uuid;
         this.children = new ArrayList<>();
         this.components = new ArrayList<>();
         this.isEnabled = true;
+        this.layer = layer;
 
         // The node should always have transform component
         this.addComponent(new TransformComponent());
+    }
+
+    /**
+     * Set node's rendering layer
+     * */
+    public void setLayer(BaseScene.Layers layer) {
+        this.layer = layer;
+    }
+
+    /**
+     * Get node's rendering layer
+     * */
+    public BaseScene.Layers getLayer() {
+        return layer;
     }
 
     /**
@@ -196,7 +220,6 @@ public class SceneNode implements TickListener {
     public void detach() {
         this.scene = null;
         this.parent = null;;
-        this.nametag = null;
         this.children.clear();
     }
 

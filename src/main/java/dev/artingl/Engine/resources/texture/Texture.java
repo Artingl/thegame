@@ -13,6 +13,7 @@ import static org.lwjgl.opengl.GL11.*;
 public class Texture {
 
     public static final Texture MISSING = new Texture(null);
+    public static final Texture UV_TEST = new Texture(null);
 
     private BufferedImage texture;
     private int textureId;
@@ -61,7 +62,8 @@ public class Texture {
     }
 
     public int getTextureId() {
-        this.update();
+        if (texture != null)
+            this.update();
         return textureId;
     }
 
@@ -134,5 +136,14 @@ public class Texture {
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
         }
+    }
+
+    public void cleanup() {
+        glDeleteTextures(this.textureId);
+        this.textureId = -1;
+        this.isTiled = false;
+        this.updateParams = false;
+        this.updateTexture = true;
+        this.texture = null;
     }
 }

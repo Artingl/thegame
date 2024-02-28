@@ -12,5 +12,5 @@ in vec3 worldPosition;
 in vec2 uv;
 
 void main() {
-    fragColor = vec4(1);//texture(texture0, uv);
+    fragColor = vec4(1, 0, 1, 1);//texture(texture0, uv);
 }

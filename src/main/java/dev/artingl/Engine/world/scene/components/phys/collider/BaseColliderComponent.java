@@ -59,8 +59,9 @@ public class BaseColliderComponent extends Component {
 
             // Build the collider and save the shape
             this.shape = this.buildCollider();
-            if (this.shape != null)
+            if (this.shape != null) {
                 this.isColliderBuilt = true;
+            }
         }
     }
 

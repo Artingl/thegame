@@ -1,9 +1,11 @@
 package dev.artingl.Game.level;
 
+import com.jme3.scene.Mesh;
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.misc.noise.PerlinNoise;
+import dev.artingl.Engine.renderer.mesh.MeshQuality;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Game.level.chunk.Chunk;
 import dev.artingl.Game.level.chunk.environment.EnvironmentObjects;
@@ -46,53 +48,82 @@ public class LevelTerrainGenerator {
      * @param chunk Chunk which is needed to be generated
      */
     public void generateChunk(Chunk chunk) {
+        // Generate the highest quality first, and all others using other threads to speed up the loading
+        Engine engine = Engine.getInstance();
+        chunk.getMesh().setVerticesQuality(
+                MeshQuality.HIGH,
+                generateQualityBuffer(MeshQuality.HIGH, chunk));
+
+        for (MeshQuality quality: MeshQuality.values()) {
+            if (quality == MeshQuality.NOT_RENDERED || quality == MeshQuality.HIGH)
+                continue;
+            engine.getThreadsManager().execute(() -> {
+                chunk.getMesh().setVerticesQuality(
+                        quality,
+                        generateQualityBuffer(quality, chunk));
+            });
+        }
+    }
+
+    private VerticesBuffer generateQualityBuffer(MeshQuality quality, Chunk chunk) {
         Vector2i chunkPosition = chunk.getPositionLevel();
-        VerticesBuffer vertices = new VerticesBuffer(
+        int idx = (quality == MeshQuality.POTATO ? MeshQuality.LOW : quality).ordinal();
+        float step = STEP * ((idx + 1) * 2);
+
+        VerticesBuffer buffer = new VerticesBuffer(
                 // Position
                 VerticesBuffer.Attribute.VEC3F,
 
                 // Normal
                 VerticesBuffer.Attribute.VEC3F,
 
+                // UV
+                VerticesBuffer.Attribute.VEC2F,
+
                 // Color
                 VerticesBuffer.Attribute.VEC3F);
 
-        for (float x = 0; x < Chunk.CHUNK_SIZE; x += STEP)
-            for (float z = 0; z < Chunk.CHUNK_SIZE; z += STEP) {
-                Terrain.TerrainMeta[] corners = calculateCorners(chunk, chunkPosition.x + x, chunkPosition.y + z);
+        for (float x = 0; x < Chunk.CHUNK_SIZE; x += step)
+            for (float z = 0; z < Chunk.CHUNK_SIZE; z += step) {
+                Terrain.TerrainMeta[] corners = calculateCorners(chunk, chunkPosition.x + x, chunkPosition.y + z, step);
 
                 // First triangle vectors and normal
                 Vector3f fv0 = new Vector3f(0.0f, 0.0f, 0.0f).add(x, corners[0].getHeight(), z);
-                Vector3f fv1 = new Vector3f(STEP, 0.0f, 0.0f).add(x, corners[1].getHeight(), z);
-                Vector3f fv2 = new Vector3f(0.0f, 0.0f, STEP).add(x, corners[2].getHeight(), z);
+                Vector3f fv1 = new Vector3f(step, 0.0f, 0.0f).add(x, corners[1].getHeight(), z);
+                Vector3f fv2 = new Vector3f(0.0f, 0.0f, step).add(x, corners[2].getHeight(), z);
 
                 // Second triangle vectors and normal
-                Vector3f sv0 = new Vector3f(STEP, 0.0f, STEP).add(x, corners[3].getHeight(), z);
-                Vector3f sv1 = new Vector3f(0.0f, 0.0f, STEP).add(x, corners[5].getHeight(), z);
-                Vector3f sv2 = new Vector3f(STEP, 0.0f, 0.0f).add(x, corners[4].getHeight(), z);
+                Vector3f sv0 = new Vector3f(step, 0.0f, step).add(x, corners[3].getHeight(), z);
+                Vector3f sv1 = new Vector3f(0.0f, 0.0f, step).add(x, corners[5].getHeight(), z);
+                Vector3f sv2 = new Vector3f(step, 0.0f, 0.0f).add(x, corners[4].getHeight(), z);
 
                 Vector3f normal0 = new Vector3f(fv1).sub(fv0).cross(new Vector3f(fv2).sub(fv0)).normalize();
                 Vector3f normal1 = new Vector3f(sv1).sub(sv0).cross(new Vector3f(sv2).sub(sv0)).normalize();
 
-                vertices
-                        .addAttribute(fv0).addAttribute(normal0).addColor3f(corners[0].getColor())
-                        .addAttribute(fv1).addAttribute(normal0).addColor3f(corners[1].getColor())
-                        .addAttribute(fv2).addAttribute(normal0).addColor3f(corners[2].getColor());
+                float u0 = x / Chunk.CHUNK_SIZE;
+                float v0 = z / Chunk.CHUNK_SIZE;
+                float u1 = (x + step) / Chunk.CHUNK_SIZE;
+                float v1 = (z + step) / Chunk.CHUNK_SIZE;
 
-                vertices
-                        .addAttribute(sv0).addAttribute(normal1).addColor3f(corners[3].getColor())
-                        .addAttribute(sv1).addAttribute(normal1).addColor3f(corners[4].getColor())
-                        .addAttribute(sv2).addAttribute(normal1).addColor3f(corners[5].getColor());
+                buffer
+                        .addAttribute(fv0).addAttribute(normal0).addAttribute(new Vector2f(u0, v0)).addColor3f(corners[0].getColor())
+                        .addAttribute(fv1).addAttribute(normal0).addAttribute(new Vector2f(u1, v0)).addColor3f(corners[1].getColor())
+                        .addAttribute(fv2).addAttribute(normal0).addAttribute(new Vector2f(u0, v1)).addColor3f(corners[2].getColor());
+
+                buffer
+                        .addAttribute(sv0).addAttribute(normal1).addAttribute(new Vector2f(u1, v1)).addColor3f(corners[3].getColor())
+                        .addAttribute(sv1).addAttribute(normal1).addAttribute(new Vector2f(u0, v1)).addColor3f(corners[4].getColor())
+                        .addAttribute(sv2).addAttribute(normal1).addAttribute(new Vector2f(u1, v0)).addColor3f(corners[5].getColor());
             }
 
-        chunk.getMesh().setVertices(vertices);
+        return buffer;
     }
 
-    public Terrain.TerrainMeta[] calculateCorners(Chunk chunk, float x, float z) {
+    private Terrain.TerrainMeta[] calculateCorners(Chunk chunk, float x, float z, float step) {
         Terrain.TerrainMeta m0 = this.generateTerrain(chunk, x + 0, z + 0);
-        Terrain.TerrainMeta m1 = this.generateTerrain(chunk, x + STEP, z + 0);
-        Terrain.TerrainMeta m2 = this.generateTerrain(chunk, x + 0, z + STEP);
-        Terrain.TerrainMeta m3 = this.generateTerrain(chunk, x + STEP, z + STEP);
+        Terrain.TerrainMeta m1 = this.generateTerrain(chunk, x + step, z + 0);
+        Terrain.TerrainMeta m2 = this.generateTerrain(chunk, x + 0, z + step);
+        Terrain.TerrainMeta m3 = this.generateTerrain(chunk, x + step, z + step);
 
         return new Terrain.TerrainMeta[]{m0, m1, m2, m3, m1, m2};
     }

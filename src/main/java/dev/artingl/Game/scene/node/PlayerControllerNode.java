@@ -5,7 +5,6 @@ import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.input.InputListener;
 import dev.artingl.Engine.input.Input;
 import dev.artingl.Engine.input.InputKeys;
-import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.world.scene.components.CameraComponent;
 import dev.artingl.Engine.world.scene.components.phys.CharacterControlComponent;
@@ -20,7 +19,7 @@ public class PlayerControllerNode extends CameraNode implements InputListener {
     public float defaultFov = 0;
     public float sprintFov = 0;
     public float movementSpeed = 0.25f;
-    public float cameraLeanAngle = 5f;
+    public float cameraLeanAngle = 4f;
     public float rotationSpeed = 0.2f;
     public boolean captureControl = true;
 
@@ -49,8 +48,7 @@ public class PlayerControllerNode extends CameraNode implements InputListener {
         /* Initialize the camera for the 3D space */
         CameraComponent camera = getCamera();
         camera.type = IViewport.Type.PERSPECTIVE;
-        camera.zFar = 400;
-        camera.backgroundColor = Color.BLACK;
+        camera.farPlane = 400;
 
         /* Make sure the camera is main on the scene!!! */
         this.getScene().setMainCamera(this);

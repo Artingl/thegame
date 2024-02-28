@@ -30,24 +30,20 @@ import static org.lwjgl.opengl.GL30C.glDeleteTextures;
 import static org.lwjgl.opengl.GL30C.*;
 import static org.lwjgl.opengl.GL32C.glFramebufferTexture;
 
-public class Postprocessing implements IPipeline {
-    private final Logger logger;
+public class Postprocessing {
+    public static final ShaderProgram POSTPROCESSING_PROGRAM = new ShaderProgram(
+            new Shader(ShaderType.VERTEX, new Resource("engine", "shaders/postprocessing/postprocessing.vert")),
+            new Shader(ShaderType.FRAGMENT, new Resource("engine", "shaders/postprocessing/postprocessing.frag"))
+    );
 
-    private final ShaderProgram postprocessingShader;
+    private final Logger logger;
+    private final List<IPostprocess> effects;
     private BaseMesh screenMesh;
     private int fbo, textureId;
 
-    private final List<IPostprocess> effects;
-
     public Postprocessing(Logger logger) {
-        this.logger = logger;
-
-        this.postprocessingShader = new ShaderProgram(
-                new Shader(ShaderType.VERTEX, new Resource("engine", "shaders/postprocessing/postprocessing.vert")),
-                new Shader(ShaderType.FRAGMENT, new Resource("engine", "shaders/postprocessing/postprocessing.frag"))
-        );
-
         this.effects = new ArrayList<>();
+        this.logger = logger;
     }
 
     /**
@@ -57,38 +53,23 @@ public class Postprocessing implements IPipeline {
         this.effects.add(effect);
     }
 
-    public int getFramebuffer() {
-        return fbo;
-    }
+    public void cleanup() {
+        if (this.screenMesh == null || this.effects == null)
+            return;
 
-    public int getTextureId() {
-        return textureId;
-    }
-
-    public void render(RenderContext renderContext, ShaderProgram shaderProgram) {
-        this.screenMesh.setShaderProgram(shaderProgram);
-        shaderProgram.setMainTexture(Texture.MISSING);
-        this.screenMesh.render(renderContext, GL_QUADS);
-    }
-
-    @Override
-    public void pipelineCleanup(PipelineInstance instance) {
         for (IPostprocess effect: effects) {
             effect.cleanup(this);
         }
 
         this.effects.clear();
         this.screenMesh.cleanup();
-        this.postprocessingShader.cleanup();
 
         glDeleteFramebuffers(this.fbo);
         glDeleteTextures(this.textureId);
     }
 
-    @Override
-    public void pipelineInit(PipelineInstance instance) throws EngineException {
+    public void init() throws EngineException {
         this.screenMesh = new BaseMesh(
-                new Vector3f(), new Vector3f(),
                 new VerticesBuffer(VerticesBuffer.Attribute.VEC3F, VerticesBuffer.Attribute.VEC2F)
                         .addAttribute(new Vector3f(-1.0f, -1.0f, 0.0f)).addAttribute(new Vector2f(0, 0))
                         .addAttribute(new Vector3f(1.0f, -1.0f, 0.0f)).addAttribute(new Vector2f(1, 0))
@@ -96,9 +77,8 @@ public class Postprocessing implements IPipeline {
                         .addAttribute(new Vector3f(-1.0f, 1.0f, 0.0f)).addAttribute(new Vector2f(0, 1))
         );
         this.screenMesh.bake();
-
-        this.postprocessingShader.bake();
-        this.postprocessingShader.addTextureUniform("postprocessingFramebufferTexture", 2);
+        this.screenMesh.toggleFade(false);
+        POSTPROCESSING_PROGRAM.bake();
 
         // Init framebuffer and texture for the bloom shader
         Display display = Engine.getInstance().getDisplay();
@@ -108,43 +88,41 @@ public class Postprocessing implements IPipeline {
         this.fbo = glGenFramebuffers();
         this.textureId = glGenTextures();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, this.fbo);
-
-        glBindTexture(GL_TEXTURE_2D, this.textureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, this.textureId, 0);
-        glDrawBuffers(new int[]{GL_COLOR_ATTACHMENT1});
+//        glBindFramebuffer(GL_FRAMEBUFFER, this.fbo);
+//
+//        glBindTexture(GL_TEXTURE_2D, this.textureId);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+//
+//        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, this.textureId, 0);
+//        glDrawBuffers(new int[]{GL_COLOR_ATTACHMENT1});
 
         // Check framebuffer
-        int status;
-        if ((status = glCheckFramebufferStatus(GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
-            throw new EngineException("Unable to make framebuffer for the postprocessing: " + status);
+//        int status;
+//        if ((status = glCheckFramebufferStatus(GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
+//            throw new EngineException("Unable to make framebuffer for the postprocessing: " + status);
 
         for (IPostprocess effect: effects) {
             effect.init(this);
         }
     }
 
-    @Override
-    public void pipelineRender(RenderContext renderContext, PipelineInstance instance) {
+    public void render(RenderContext renderContext) {
         // Check if the rendering of effects is enabled
-        if (renderContext.getRenderer().isPostprocessingEnabled()) {
-            // Render all effects
-            for (IPostprocess effect : effects) {
-                effect.render(this, renderContext);
-            }
-        }
+//        if (renderContext.getRenderer().isPostprocessingEnabled()) {
+//            // Render all effects
+//            for (IPostprocess effect : effects) {
+//                effect.render(this, renderContext);
+//            }
+//        }
 
-        this.render(renderContext, this.postprocessingShader);
+        this.screenMesh.setShaderProgram(POSTPROCESSING_PROGRAM);
+        this.screenMesh.setTexture(Texture.MISSING);
+//        shaderProgram.addTextureUniform("postprocessingFramebufferTexture", 2);
+        this.screenMesh.render(renderContext, GL_QUADS);
     }
 
-    @Override
-    public int pipelineFlags() {
-        return Flags.RENDER_DIRECTLY;
-    }
 }

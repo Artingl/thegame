@@ -26,7 +26,7 @@ public interface IMesh {
 
     /**
      * Do instance rendering with the mesh
-     * Note: default mode is GL_TRIANGLES; Custom shader program cannot be used.
+     * Note: default mode is GL_TRIANGLES;
      *
      * @param context Render context
      * */
@@ -34,7 +34,6 @@ public interface IMesh {
 
     /**
      * Do instance rendering with the mesh
-     * Note: Custom shader program cannot be used.
      *
      * @param context Render context
      * @param mode    Render mode (GL_TRIANGLES, GL_LINES, etc.)
@@ -80,8 +79,12 @@ public interface IMesh {
     /**
      * Get shader program assigned to the mesh
      * */
-    @Nullable
     ShaderProgram getShaderProgram();
+
+    /**
+     * Get shader program used for instanced rendering assigned to the mesh
+     * */
+    ShaderProgram getInstancedShaderProgram();
 
     /**
      * Make the mesh dirty
@@ -108,9 +111,9 @@ public interface IMesh {
      * Add instance to be rendered (for instanced rendering).
      * Note: this will make the mesh dirty.
      *
-     * @param mat Matrix to be used with the instance.
+     * @param buffer Buffer with values of the instance.
      * */
-    void addInstance(Matrix4f mat);
+    void addInstance(VerticesBuffer buffer);
 
     /**
      * Clear list of instances (for instanced rendering).
@@ -131,4 +134,24 @@ public interface IMesh {
      */
     VerticesBuffer[] getBuffer();
 
+
+
+    /**
+     * Set shader program that will be used for rendering of this mesh
+     *
+     * @param program The program to be set
+     * */
+    void setShaderProgram(ShaderProgram program);
+
+    /**
+     * Set shader program that will be used for instanced rendering of this mesh
+     *
+     * @param program The program to be set
+     * */
+    void setInstancedShaderProgram(ShaderProgram program);
+
+    /**
+     * Set mesh's opacity
+     * */
+    void setOpacity(float opacity);
 }
