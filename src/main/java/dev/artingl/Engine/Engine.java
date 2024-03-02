@@ -1,29 +1,43 @@
 package dev.artingl.Engine;
 
-import com.jme3.app.SimpleApplication;
-import dev.artingl.Engine.world.audio.SoundsManager;
 import dev.artingl.Engine.debug.Debugger;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.debug.Profiler;
-import dev.artingl.Engine.input.InputListener;
 import dev.artingl.Engine.input.Input;
 import dev.artingl.Engine.input.InputKeys;
+import dev.artingl.Engine.input.InputListener;
+import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.resources.Options;
-import dev.artingl.Engine.resources.Resource;
-import dev.artingl.Engine.resources.texture.TextureManager;
+import dev.artingl.Engine.resources.ResourceManager;
 import dev.artingl.Engine.threading.ThreadsManager;
-import dev.artingl.Engine.world.scene.SceneManager;
 import dev.artingl.Engine.timer.TickListener;
 import dev.artingl.Engine.timer.Timer;
+import dev.artingl.Engine.world.audio.SoundsManager;
+import dev.artingl.Engine.world.scene.SceneManager;
+import org.apache.commons.io.FileUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GLDebugMessageCallback;
 
+import java.io.File;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.stream.Stream;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL43C.*;
 
 public class Engine implements TickListener, InputListener {
 
@@ -34,8 +48,6 @@ public class Engine implements TickListener, InputListener {
     }
     // ----------------
 
-    private final String mainNamespace;
-
     private final Logger logger;
     private final Display display;
     private final Renderer renderer;
@@ -45,31 +57,52 @@ public class Engine implements TickListener, InputListener {
     private final SceneManager sceneManager;
     private final Debugger debugger;
     private final Input input;
-    private final TextureManager textureManager;
+    private final ResourceManager resourceManager;
     private final Timer timer;
     private final SoundsManager soundsManager;
     private final ConcurrentLinkedDeque<EngineEventListener> engineEvents;
+    private final List<String> namespaces;
+    private final List<URI> libsFolders;
+    private final List<Runnable> glContext;
 
     private boolean reload;
 
-    public Engine(String name) {
+    public Engine() {
         instance = this;
 
-        this.mainNamespace = name;
-        this.logger = Logger.create(name);
+        this.logger = Logger.create("Engine");
 
         this.timer = new Timer(128);
         this.input = new Input();
         this.profiler = new Profiler();
         this.threadsManager = new ThreadsManager();
         this.options = new Options(this.logger);
-        this.display = new Display(this.logger, this.input, name, 1400, 900);
+        this.display = new Display(this.logger, this.input, "Engine - Untitled Window", 1400, 900);
         this.renderer = new Renderer(this.logger);
-        this.textureManager = new TextureManager(this.logger);
+        this.resourceManager = new ResourceManager(this, this.logger);
         this.sceneManager = new SceneManager();
         this.debugger = new Debugger();
         this.soundsManager = new SoundsManager(this.logger, this);
+        this.namespaces = new ArrayList<>();
         this.engineEvents = new ConcurrentLinkedDeque<>();
+        this.libsFolders = new ArrayList<>();
+        this.glContext = new ArrayList<>();
+
+        this.addLibsFolder(new File("./natives"));
+    }
+
+    /**
+     * Add folder path to the list of folders where the engine would look for libraries on initialization
+     * */
+    public void addLibsFolder(File folder) {
+        if (!folder.isDirectory())
+            throw new InvalidParameterException("Folder " + folder.getAbsolutePath() + " does not exist!");
+
+        this.libsFolders.add(folder.toURI());
+    }
+
+    public ResourceManager getResourceManager() {
+        return resourceManager;
     }
 
     public Input getInput() {
@@ -96,10 +129,6 @@ public class Engine implements TickListener, InputListener {
         return soundsManager;
     }
 
-    public TextureManager getTextureManager() {
-        return textureManager;
-    }
-
     public Options getOptions() {
         return options;
     }
@@ -120,13 +149,53 @@ public class Engine implements TickListener, InputListener {
         return renderer;
     }
 
-    public void loadLibs() {
-        this.logger.log(LogLevel.INFO, "Loading all libraries");
+    /**
+     * Register namespace to be used in resources
+     *
+     * @param namespace Namespace to register
+     * */
+    public void registerNamespace(String namespace) {
+        this.namespaces.add(namespace);
+    }
 
-        // TODO: thats too bad... the actual DLL is located inside the jme3 natives jar, but
-        //       i am too lazy right now to make a loader for it. So, i just decided to put it
-        //       somewhere on my system and load manually. MUST BE FIXED!!!
-        System.load("C:\\stuff\\Environment\\Documents\\bulletjme.dll");
+    public Collection<String> getNamespaces() {
+        return namespaces;
+    }
+
+    public void loadLibs() throws Exception {
+        this.logger.log(LogLevel.WARNING, "!!! IF YOU CRASHED AFTER THIS LOG, CHECK PATHS TO LIB FOLDERS !!!");
+
+        // Load libs from all folders
+        for (URI folder: this.libsFolders) {
+            Path directory = Paths.get(folder);
+
+            // Load all textures
+            try (Stream<Path> walk = Files.walk(directory, 3).filter(Files::isRegularFile)) {
+                for (Iterator<Path> it = walk.iterator(); it.hasNext();) {
+                    Path path = it.next();
+                    if (!path.toString().endsWith(".dll"))
+                        continue;
+                    this.logger.log(LogLevel.INFO, "Loading library: " + path);
+
+                    // Verify checksum before loading
+                    String checksum = Utils.getMD5Checksum(path.toString());
+                    File checksumFile = new File(path + ".checksum");
+
+                    if (checksumFile.isFile()) {
+                        String validChecksum = FileUtils.readFileToString(checksumFile, StandardCharsets.UTF_8);
+                        if (!validChecksum.equals(checksum)) {
+                            throw new EngineException("Invalid checksum for '" + path + "!' '" + checksum + "' != '" + validChecksum + "'");
+                        }
+                    }
+                    else {
+                        this.logger.log(LogLevel.WARNING, "No checksum found for '%s'. Checksum: %s", path.toString(), checksum);
+                    }
+
+                    // Load the lib
+                    System.load(path.toString());
+                }
+            }
+        }
     }
 
     public void create() throws Exception {
@@ -151,9 +220,6 @@ public class Engine implements TickListener, InputListener {
         String glVersion = glGetString(GL_VERSION);
         logger.log(LogLevel.INFO, "OpenGL v%s", glVersion);
 
-        // Load textures
-        this.textureManager.load(new Resource(this.mainNamespace, "textures"));
-
         // Init the renderer
         this.renderer.create();
 
@@ -164,8 +230,9 @@ public class Engine implements TickListener, InputListener {
         this.input.subscribe(this);
 
         this.input.init();
-        this.textureManager.init();
+        this.resourceManager.init();
         this.soundsManager.init();
+        this.debugger.init();
 
         // Setup OpenGL
         glEnable(GL_TEXTURE_2D);
@@ -181,16 +248,25 @@ public class Engine implements TickListener, InputListener {
 //        glCullFace(GL_BACK);
         glFrontFace(GL_CW);
 
+        glEnable(GL_DEBUG_OUTPUT);
+        glDebugMessageCallback((src, type, id, severity, len, msg, userParam) -> {
+            if (type == GL_DEBUG_TYPE_ERROR && severity == GL_DEBUG_SEVERITY_HIGH)
+                logger.log(LogLevel.INFO, "OPENGL DEBUG: " + GLDebugMessageCallback.getMessage(len, msg));
+        }, 0);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
         this.timer.enterLoop();
     }
 
     public void terminate() {
-        this.engineEvents.remove();
-        this.textureManager.cleanup();
+        this.debugger.cleanup();
+        this.engineEvents.clear();
+        this.resourceManager.cleanup();
         this.input.cleanup();
         this.soundsManager.terminate();
         this.timer.terminate();
         this.renderer.terminate();
+        this.threadsManager.terminate();
         this.display.terminate();
 
         // Terminate glfw
@@ -220,10 +296,17 @@ public class Engine implements TickListener, InputListener {
             this.reload = false;
         }
 
+        synchronized (this.glContext) {
+            for (Runnable runnable: this.glContext)
+                runnable.run();
+            this.glContext.clear();
+        }
+
         this.display.poll();
         this.profiler.frame();
         this.display.frame();
         this.renderer.frame();
+        this.debugger.frame();
         this.soundsManager.frame();
     }
 
@@ -234,6 +317,15 @@ public class Engine implements TickListener, InputListener {
     @Override
     public void tick(Timer timer) {
         this.display.tick(timer);
+    }
+
+    /**
+     * Schedule code to be run in GL context
+     * */
+    public void glContext(Runnable runnable) {
+        synchronized (this.glContext) {
+            this.glContext.add(runnable);
+        }
     }
 
     /**

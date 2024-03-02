@@ -15,8 +15,8 @@ public interface IViewport {
     float getAspect();
     float getWidth();
     float getHeight();
-    float getZNear();
-    float getZFar();
+    float getNearPlane();
+    float getFarPlane();
     float getSize();
 
     Type getType();

@@ -2,6 +2,8 @@ package dev.artingl.Engine.renderer.mesh;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
+import dev.artingl.Engine.debug.LogLevel;
+import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.MathUtils;
 import dev.artingl.Engine.renderer.RenderContext;
 import dev.artingl.Engine.renderer.Renderer;
@@ -10,15 +12,14 @@ import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import dev.artingl.Engine.renderer.shader.ShaderType;
 import dev.artingl.Engine.renderer.viewport.Viewport;
 import dev.artingl.Engine.resources.Resource;
+import dev.artingl.Engine.resources.texture.Texture;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL15C.*;
-import static org.lwjgl.opengl.GL20.glUniformMatrix4fv;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30C.*;
 import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
@@ -34,15 +35,6 @@ public class BaseMesh implements IMesh {
             new Shader(ShaderType.FRAGMENT, new Resource("engine", "shaders/mesh/base_mesh.frag"))
     );
 
-    static {
-        try {
-            BASE_PROGRAM.bake();
-            INSTANCED_BASE_PROGRAM.bake();
-        } catch (EngineException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private int verticesCount;
     private int indicesCount;
     private VerticesBuffer vertices;
@@ -53,16 +45,19 @@ public class BaseMesh implements IMesh {
     private int mode;
     private boolean isBaked;
     private boolean isDirty;
+    private Texture currentTexture;
     private ShaderProgram program;
-    private final List<Matrix4f> instances;
+    private ShaderProgram instancedProgram;
+    private final List<VerticesBuffer> instances;
     private boolean enableFadeAnimation;
+    private Color color;
 
 
     public BaseMesh() {
-        this(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), null);
+        this(null);
     }
 
-    public BaseMesh(Vector3f position, Vector3f rotation, VerticesBuffer vertices) {
+    public BaseMesh(VerticesBuffer vertices) {
         this.vertices = vertices;
         this.vao = -1;
         this.instancesVBO = -1;
@@ -70,16 +65,34 @@ public class BaseMesh implements IMesh {
         this.ebo = -1;
         this.verticesCount = -1;
         this.indicesCount = 1;
+        this.color = Color.WHITE;
         this.opacity = 1;
         this.isBaked = false;
         this.isDirty = true;
         this.program = BASE_PROGRAM;
+        this.instancedProgram = INSTANCED_BASE_PROGRAM;
         this.mode = GL_TRIANGLES;
         this.instances = new ArrayList<>();
+        this.currentTexture = Texture.MISSING;
         this.enableFadeAnimation = true;
 
         if (this.vertices == null)
             this.vertices = new VerticesBuffer();
+    }
+
+    /**
+     * Set mesh's texture
+     * */
+    public void setTexture(Texture texture) {
+        this.currentTexture = texture;
+    }
+
+    /**
+     * Get current mesh's texture
+     * */
+    @Nullable
+    public Texture getTexture() {
+        return currentTexture;
     }
 
     /**
@@ -101,6 +114,15 @@ public class BaseMesh implements IMesh {
      * */
     public void toggleFade(boolean state) {
         this.enableFadeAnimation = state;
+    }
+
+    /**
+     * Set mesh's color
+     *
+     * @param color Color to be set
+     * */
+    public void setColor(Color color) {
+        this.color = color;
     }
 
     /**
@@ -133,18 +155,18 @@ public class BaseMesh implements IMesh {
         }
     }
 
-    /**
-     * Set shader program that will be used on rendering of this mesh
-     *
-     * @param program The program to be set
-     * */
-    public void setShaderProgram(@Nullable ShaderProgram program) {
+    public void setShaderProgram(ShaderProgram program) {
         this.program = program;
+    }
+
+    public void setInstancedShaderProgram(ShaderProgram program) {
+        this.instancedProgram = program;
     }
 
     private void fadeAnimationStep() {
         // Update mesh fade state, so the mesh would appear smoothly after being baked
         // TODO: use the timer for delta calculation
+        // TODO: make it as a transition between old and new mesh
         if (this.enableFadeAnimation) {
             float delta = 1f / Engine.getInstance().getProfiler().getFPS();
             this.meshFade = Math.min(1, this.meshFade + delta);
@@ -153,78 +175,120 @@ public class BaseMesh implements IMesh {
     }
 
     @Override
-    @Nullable
     public ShaderProgram getShaderProgram() {
         return program;
+    }
+
+    @Override
+    public ShaderProgram getInstancedShaderProgram() {
+        return instancedProgram;
     }
 
 
     @Override
     public void render(RenderContext context) {
-        int mode = context.getRenderer().isWireframeEnabled() ? GL_LINES : this.mode;
         render(context, mode);
     }
 
     @Override
     public void render(RenderContext context, int mode) {
-        if (!this.isBaked)
+        if (!BASE_PROGRAM.isBaked() || !INSTANCED_BASE_PROGRAM.isBaked()) {
+            BASE_PROGRAM.bake();
+            INSTANCED_BASE_PROGRAM.bake();
+        }
+
+        if (verticesCount > 0 && vao <= 0) {
+            Engine.getInstance().getLogger().log(LogLevel.WARNING, "Trying to render an empty mesh! VAO=%d, VERT_CNT=%d, INSTANCE=%s", vao, verticesCount, this);
+            this.makeDirty();
+            return;
+        }
+        if (indicesCount > 0 && ebo <= 0) {
+            Engine.getInstance().getLogger().log(LogLevel.WARNING, "Trying to render an empty mesh! EBO=%d, INDT_CNT=%d, INSTANCE=%s", ebo, indicesCount, this);
+            this.makeDirty();
+            return;
+        }
+
+        if (!this.isBaked || mode <= 0)
             return;
         this.fadeAnimationStep();
 
+
         // Use the shader program if we have one
         if (program != null) {
-            program.use();
+            program.setMainTexture(currentTexture);
             program.updateModelMatrix(getModelMatrix());
+            program.setUniformVector4f("color", color.asVector4f());
             program.setUniformFloat("opacity", this.opacity * MathUtils.easeInOutCirc(meshFade));
-
             Viewport viewport = context.getViewport();
             viewport.uploadMatrices(program);
+            program.use();
         }
 
         // Render the mesh
-        if (verticesCount != -1)
+        if (verticesCount > 0)
             context.getRenderer().drawCall(Renderer.DrawCall.ARRAYS, vao, mode, verticesCount);
-        else if (indicesCount != -1)
+        else if (indicesCount > 0)
             context.getRenderer().drawCall(Renderer.DrawCall.ELEMENTS, ebo, mode, indicesCount);
     }
+
     @Override
     public void renderInstanced(RenderContext context) {
-        this.renderInstanced(context, GL_TRIANGLES);
+        this.renderInstanced(context, mode);
     }
 
     @Override
     public void renderInstanced(RenderContext context, int mode) {
-        if (!this.isBaked)
+        if (!BASE_PROGRAM.isBaked() || !INSTANCED_BASE_PROGRAM.isBaked()) {
+            BASE_PROGRAM.bake();
+            INSTANCED_BASE_PROGRAM.bake();
+        }
+
+        if (verticesCount > 0 && vao <= 0) {
+            Engine.getInstance().getLogger().log(LogLevel.WARNING, "Trying to render an empty mesh! VAO=%d, VERT_CNT=%d, INSTANCE=%s", vao, verticesCount, this);
+            this.makeDirty();
+            return;
+        }
+        if (indicesCount > 0 && ebo <= 0) {
+            Engine.getInstance().getLogger().log(LogLevel.WARNING, "Trying to render an empty mesh! EBO=%d, INDT_CNT=%d, INSTANCE=%s", ebo, indicesCount, this);
+            this.makeDirty();
+            return;
+        }
+
+        if (!this.isBaked || this.instances.isEmpty() || mode <= 0)
             return;
         this.fadeAnimationStep();
 
-        // Use the shader program if we have one
-        this.program = INSTANCED_BASE_PROGRAM;
-        INSTANCED_BASE_PROGRAM.use();
-        program.setUniformFloat("opacity", this.opacity * MathUtils.easeInOutCirc(meshFade));
+        this.instancedProgram.setMainTexture(currentTexture);
+        this.instancedProgram.updateModelMatrix(getModelMatrix());
+        this.instancedProgram.setUniformVector4f("color", color.asVector4f());
+        this.instancedProgram.setUniformFloat("opacity", this.opacity * MathUtils.easeInOutCirc(meshFade));
+        this.instancedProgram.use();
         Viewport viewport = context.getViewport();
-        viewport.uploadMatrices(INSTANCED_BASE_PROGRAM);
+        viewport.uploadMatrices(this.instancedProgram);
 
         // Render the mesh
-        if (verticesCount != -1)
+        if (verticesCount > 0)
             context.getRenderer().drawCallInstanced(Renderer.DrawCall.ARRAYS, vao, mode, verticesCount, this.instances.size());
-        else if (indicesCount != -1)
+        else if (indicesCount > 0)
             context.getRenderer().drawCallInstanced(Renderer.DrawCall.ELEMENTS, ebo, mode, indicesCount, this.instances.size());
     }
 
     @Override
     public void setQuality(MeshQuality quality) {
+        this.makeDirty();
         // Does noting by default
     }
 
     @Override
-    public void addInstance(Matrix4f mat) {
-        this.instances.add(mat);
+    public void addInstance(VerticesBuffer buffer) {
+        this.instances.add(buffer);
         this.makeDirty();
     }
 
     @Override
     public void clearInstances() {
+        for (VerticesBuffer b: this.instances)
+            b.cleanup();
         this.instances.clear();
         this.makeDirty();
     }
@@ -248,20 +312,20 @@ public class BaseMesh implements IMesh {
                     .getMeshManager()
                     .deactivateMesh(this);
 
-            if (this.vao != -1)
+            if (this.vao > 0)
                 glDeleteVertexArrays(vao);
-            if (this.vbo != -1)
+            if (this.vbo > 0)
                 glDeleteBuffers(vbo);
-            if (this.ebo != -1)
+            if (this.ebo > 0)
                 glDeleteBuffers(ebo);
-            if (this.instancesVBO != -1)
+            if (this.instancesVBO > 0)
                 glDeleteBuffers(this.instancesVBO);
             this.vao = -1;
             this.vbo = -1;
             this.ebo = -1;
             this.instancesVBO = -1;
             this.verticesCount = -1;
-            this.indicesCount = 1;
+            this.indicesCount = -1;
 
             if (this.vertices != null)
                 this.vertices.cleanup();
@@ -271,27 +335,30 @@ public class BaseMesh implements IMesh {
 
     @Override
     public void bake() {
+        // Some classes which extend this BaseMesh class sometimes would want not to render the mesh.
+        // In this case, skip the baking process if the mesh rendering is disabled
+        if (getQuality() == MeshQuality.NOT_RENDERED)
+            return;
+        if (!this.isDirty && this.isBaked)
+            return;
+
         synchronized (this.vertices) {
+            if (this.vao > 0)
+                glDeleteVertexArrays(vao);
+            if (this.vbo > 0)
+                glDeleteBuffers(vbo);
+            if (this.ebo > 0)
+                glDeleteBuffers(ebo);
+            if (this.instancesVBO > 0)
+                glDeleteBuffers(this.instancesVBO);
+
             this.meshFade = 0;
-
-            if (this.isBaked && this.isDirty) {
-                if (this.vao != -1)
-                    glDeleteVertexArrays(vao);
-                if (this.vbo != -1)
-                    glDeleteBuffers(vbo);
-                if (this.ebo != -1)
-                    glDeleteBuffers(ebo);
-                if (this.instancesVBO != -1)
-                    glDeleteBuffers(this.instancesVBO);
-            } else if (this.isBaked)
-                return;
-
             this.ebo = -1;
             this.vao = -1;
             this.vbo = -1;
             this.instancesVBO = -1;
             this.verticesCount = -1;
-            this.indicesCount = 1;
+            this.indicesCount = -1;
 
             if (this.vertices == null)
                 return;
@@ -308,29 +375,11 @@ public class BaseMesh implements IMesh {
                 this.verticesCount = this.vertices.bake(vao, vbo, ebo);
 
             // Initialize instance rendering if we have any instances provided
-            if (!this.instances.isEmpty()) {
-                float[] instances = new float[this.instances.size() * 16];
-                int i = 0;
-                for (Matrix4f mat : this.instances) {
-                    mat.get(instances, i);
-                    i += 16;
+            if (!this.instances.isEmpty() && this.instancesVBO > 0) {
+                int indexOffset = this.vertices.getAttributes().length;
+                for (VerticesBuffer buffer: this.instances) {
+                    buffer.bake(-1, this.instancesVBO, -1, indexOffset);
                 }
-
-                glBindBuffer(GL_ARRAY_BUFFER, this.instancesVBO);
-                glBufferData(GL_ARRAY_BUFFER, instances, GL_STATIC_DRAW);
-                glVertexAttribPointer(3, 4, GL_FLOAT, false, 16 * 4, 0);
-                glVertexAttribPointer(4, 4, GL_FLOAT, false, 16 * 4, 16);
-                glVertexAttribPointer(5, 4, GL_FLOAT, false, 16 * 4, 32);
-                glVertexAttribPointer(6, 4, GL_FLOAT, false, 16 * 4, 48);
-                glEnableVertexAttribArray(3);
-                glEnableVertexAttribArray(4);
-                glEnableVertexAttribArray(5);
-                glEnableVertexAttribArray(6);
-                glVertexAttribDivisor(3, 1);
-                glVertexAttribDivisor(4, 1);
-                glVertexAttribDivisor(5, 1);
-                glVertexAttribDivisor(6, 1);
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
             }
 
             this.isBaked = true;

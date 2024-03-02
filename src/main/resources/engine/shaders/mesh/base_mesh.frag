@@ -2,15 +2,19 @@
 
 layout (location = 0) out vec4 fragColor;
 
-uniform sampler2D texture0;
-uniform sampler2D framebufferTexture;
+uniform sampler2D tex0;
+uniform int isTex0Set;
 uniform float opacity;
+uniform vec4 color;
 
 in vec3 worldPosition;
-in vec4 color;
+in vec3 normal;
 in vec2 uv;
 
 void main() {
-    fragColor = texture(texture0, uv) * color;
+    fragColor = color;
+    if (isTex0Set == 1) {
+        fragColor *= texture(tex0, uv);
+    }
     fragColor.a *= opacity;
 }

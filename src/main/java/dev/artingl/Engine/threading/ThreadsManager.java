@@ -40,4 +40,8 @@ public class ThreadsManager {
         this.logger.log(LogLevel.UNIMPLEMENTED, "Threading: submit(Callable<T> handler, int timeout)");
         return null;
     }
+
+    public void terminate() {
+        this.executor.shutdown();
+    }
 }

@@ -25,19 +25,29 @@ public class TransformComponent extends Component {
 
     public Matrix4f getMatrix() {
         /* If the node is a child, calculate relative position to the parent transform
-        * TODO: also calculate rotation and scale */
-        Vector3f relativePosition = new Vector3f();
+        * TODO: also calculate rotation */
         SceneNode node = getNode();
 
         if (node != null) {
             if (node.isChild()) {
-                relativePosition.set(node.getParent().getTransform().position);
+                TransformComponent parentTransform = node.getParent().getTransform();
+                Vector3f relativePosition = new Vector3f(parentTransform.position);
+                Vector3f relativeRotation = new Vector3f(parentTransform.rotation);
+                Vector3f relativeScale = new Vector3f(parentTransform.scale);
+
+                return new Matrix4f()
+                        .scale(relativeScale.mul(scale))
+                        .translate(relativePosition.add(position))
+                        .rotateXYZ(
+                                (float) Math.toRadians(rotation.x),
+                                (float) Math.toRadians(rotation.y),
+                                (float) Math.toRadians(rotation.z));
             }
         }
 
         return new Matrix4f()
                 .scale(scale)
-                .translate(relativePosition.add(position))
+                .translate(position)
                 .rotateXYZ(
                         (float) Math.toRadians(rotation.x),
                         (float) Math.toRadians(rotation.y),

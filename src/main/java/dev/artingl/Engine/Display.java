@@ -206,8 +206,10 @@ public class Display {
     }
 
     public void frame() {
+        long start = System.nanoTime();
         glfwSwapBuffers(windowId);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        Engine.getInstance().getProfiler().addGpuTime((System.nanoTime() - start) / 1000000f);
 
         // Hide/show cursor based on capture status
         glfwSetInputMode(windowId, GLFW_CURSOR, this.isCursorCaptured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);

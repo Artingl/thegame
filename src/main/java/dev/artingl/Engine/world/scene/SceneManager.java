@@ -139,9 +139,4 @@ public class SceneManager implements IPipeline {
         }
     }
 
-    @Override
-    public int pipelineFlags() {
-        return 0;
-    }
-
 }

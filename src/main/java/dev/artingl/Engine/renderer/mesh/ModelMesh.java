@@ -13,6 +13,7 @@ import org.joml.Matrix4f;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.lwjgl.opengl.GL11C.GL_LINES;
 import static org.lwjgl.opengl.GL11C.GL_TRIANGLES;
 
 public class ModelMesh implements IMesh {
@@ -26,13 +27,14 @@ public class ModelMesh implements IMesh {
     // List of meshes to use
     private final String[] customMeshes;
     private final List<String> meshes;
-    private final List<Matrix4f> instances;
+    private final List<VerticesBuffer> instances;
     private MeshQuality currentQuality;
     private Matrix4f modelMatrix;
     private int totalIndices, totalVertices;
     private boolean isDirty;
     private boolean isBaked;
     private boolean enableFadeAnimation;
+    private int mode;
 
     public ModelMesh(IModel model) {
         this(model, (String[]) null);
@@ -54,6 +56,7 @@ public class ModelMesh implements IMesh {
         this.instances = new ArrayList<>();
         this.modelMatrix = new Matrix4f();
         this.currentQuality = MeshQuality.HIGH;
+        this.mode = GL_TRIANGLES;
         this.isDirty = true;
         this.enableFadeAnimation = true;
         this.customMeshes = meshes;
@@ -67,6 +70,13 @@ public class ModelMesh implements IMesh {
 
         engine.getLogger().log(LogLevel.INFO, "Initializing model for rendering with " +
                 this.meshes.size() + " meshes (" + String.join(", ", this.meshes) + ")");
+    }
+
+    /**
+     * Set render mode to be used by default
+     * */
+    public void setMode(int mode) {
+        this.mode = mode;
     }
 
     /**
@@ -118,10 +128,10 @@ public class ModelMesh implements IMesh {
 
     @Override
     public void render(RenderContext context) {
-        render(context, GL_TRIANGLES);
+        render(context, mode);
     }
 
-    private void setupRenderTexture(ShaderProgram program, BaseMesh mesh, String name) {
+    private void prepareRender(ShaderProgram program, BaseMesh mesh, String name) {
         Engine engine = Engine.getInstance();
 
         if (program != null) {
@@ -133,13 +143,13 @@ public class ModelMesh implements IMesh {
 
             if (material != null) {
                 if (material.getCustomTexture() != null)
-                    texture = engine.getTextureManager().getTexture(material.getCustomTexture());
+                    texture = engine.getResourceManager().getTextureManager().getTexture(material.getCustomTexture());
 
                 texture.setTiling(material.isTextureTiled());
                 mesh.setOpacity(material.getOpacity());
             }
 
-            program.setMainTexture(texture);
+            mesh.setTexture(texture);
         }
     }
 
@@ -171,7 +181,7 @@ public class ModelMesh implements IMesh {
             ind += mesh.getIndicesCount();
             program = mesh.getShaderProgram();
 
-            this.setupRenderTexture(program, mesh, name);
+            this.prepareRender(program, mesh, name);
             mesh.toggleFade(this.enableFadeAnimation);
             mesh.transform(modelMatrix);
             mesh.render(context, mode);
@@ -183,7 +193,7 @@ public class ModelMesh implements IMesh {
 
     @Override
     public void renderInstanced(RenderContext context) {
-        renderInstanced(context, GL_TRIANGLES);
+        renderInstanced(context, mode);
     }
 
     @Override
@@ -212,9 +222,9 @@ public class ModelMesh implements IMesh {
 
             vert += mesh.getVerticesCount();
             ind += mesh.getIndicesCount();
-            program = mesh.getShaderProgram();
+            program = mesh.getInstancedShaderProgram();
 
-            this.setupRenderTexture(program, mesh, name);
+            this.prepareRender(program, mesh, name);
             mesh.toggleFade(this.enableFadeAnimation);
             mesh.transform(modelMatrix);
             mesh.renderInstanced(context, mode);
@@ -262,10 +272,9 @@ public class ModelMesh implements IMesh {
 
             // Add all global instances for all meshes
             mesh.clearInstances();
-            for (Matrix4f mat: this.instances) {
-                mesh.addInstance(mat);
+            for (VerticesBuffer buffer: this.instances) {
+                mesh.addInstance(buffer);
             }
-
             mesh.bake();
         }
 
@@ -305,6 +314,11 @@ public class ModelMesh implements IMesh {
     }
 
     @Override
+    public ShaderProgram getInstancedShaderProgram() {
+        return BaseMesh.INSTANCED_BASE_PROGRAM;
+    }
+
+    @Override
     public void makeDirty() {
         this.isDirty = true;
     }
@@ -325,13 +339,15 @@ public class ModelMesh implements IMesh {
     }
 
     @Override
-    public void addInstance(Matrix4f mat) {
-        this.instances.add(mat);
+    public void addInstance(VerticesBuffer buf) {
+        this.instances.add(buf);
         this.makeDirty();
     }
 
     @Override
     public void clearInstances() {
+        for (VerticesBuffer b: this.instances)
+            b.cleanup();
         this.instances.clear();
         this.makeDirty();
     }
@@ -365,5 +381,17 @@ public class ModelMesh implements IMesh {
         for (BaseMesh mesh: this.modelMeshes.values())
             buffers[i++] = mesh.getBuffer()[0];
         return buffers;
+    }
+
+    @Override
+    public void setShaderProgram(ShaderProgram program) {
+    }
+
+    @Override
+    public void setInstancedShaderProgram(ShaderProgram program) {
+    }
+
+    @Override
+    public void setOpacity(float opacity) {
     }
 }

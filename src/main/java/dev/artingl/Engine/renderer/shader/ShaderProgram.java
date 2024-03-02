@@ -4,11 +4,12 @@ import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
-import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Framebuffer;
 import dev.artingl.Engine.renderer.Renderer;
-import dev.artingl.Engine.renderer.pipeline.IPipeline;
-import dev.artingl.Engine.renderer.pipeline.PipelineInstance;
+import dev.artingl.Engine.renderer.viewport.Viewport;
 import dev.artingl.Engine.resources.texture.Texture;
+import dev.artingl.Engine.timer.TickListener;
+import dev.artingl.Engine.timer.Timer;
 import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
@@ -18,16 +19,19 @@ import java.util.List;
 
 import static org.lwjgl.opengl.GL20.*;
 
-public class ShaderProgram implements IPipeline {
+public class ShaderProgram implements TickListener {
 
 
     private final Shader[] shadersList;
     private final List<TextureUniform> textures;
+    private final List<UniformProp> uniforms;
     private int programId;
     private int mainTexture;
+    private float time;
 
     public ShaderProgram(Shader ...shaders) {
         this.textures = new ArrayList<>();
+        this.uniforms = new ArrayList<>();
         this.shadersList = shaders;
         this.programId = -1;
     }
@@ -40,6 +44,8 @@ public class ShaderProgram implements IPipeline {
             // Already baked
             return;
         }
+
+        Engine.getInstance().getTimer().subscribe(this);
 
         this.programId = glCreateProgram();
 
@@ -95,6 +101,7 @@ public class ShaderProgram implements IPipeline {
      * Cleanup everything related to this program
      * */
     public void cleanup() {
+        Engine.getInstance().getTimer().unsubscribe(this);
         this.textures.clear();
 
         // Cleanup all shaders just in case
@@ -123,50 +130,55 @@ public class ShaderProgram implements IPipeline {
         return glGetUniformLocation(this.programId, name);
     }
 
-    public void setUniformMatrix4f(String uniform, Matrix4f mat)
-    {
-        if (mat == null)
-            return;
-
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            FloatBuffer fb = mat.get(stack.mallocFloat(16));
-            glUniformMatrix4fv(getUniformLoc(uniform), false, fb);
-        }
+    public void setUniformMatrix4f(String uniform, Matrix4f mat)  {
+        this.uniforms.add(new UniformProp(uniform, mat));
     }
 
-    public void setUniformFloat(String uniform, float f)
-    {
-        glUniform1f(getUniformLoc(uniform), f);
+    public void setUniformObject(String uniform, Object o) {
+        this.uniforms.add(new UniformProp(uniform, o));
+    }
+
+    public void setUniformFloat(String uniform, float f) {
+        this.uniforms.add(new UniformProp(uniform, f));
     }
 
     public void setUniformVector3f(String uniform, Vector3f vec) {
-        glUniform3f(getUniformLoc(uniform), vec.x, vec.y, vec.z);
+        this.uniforms.add(new UniformProp(uniform, vec));
+    }
+
+    public void setUniformVector4f(String uniform, Vector4f vec) {
+        this.uniforms.add(new UniformProp(uniform, vec));
+    }
+
+    public void setUniformVector4i(String uniform, Vector4i vec) {
+        this.uniforms.add(new UniformProp(uniform, vec));
     }
 
     public void setUniformVector2f(String uniform, Vector2f vec) {
-        glUniform2f(getUniformLoc(uniform), vec.x, vec.y);
+        this.uniforms.add(new UniformProp(uniform, vec));
     }
 
-    public void setUniformInt(String uniform, int f)
-    {
-        glUniform1i(getUniformLoc(uniform), f);
+    public void setUniformInt(String uniform, int f) {
+        this.uniforms.add(new UniformProp(uniform, f));
     }
 
     public void setUniformVector3i(String uniform, Vector3i vec) {
-        glUniform3i(getUniformLoc(uniform), vec.x, vec.y, vec.z);
+        this.uniforms.add(new UniformProp(uniform, vec));
     }
 
     public void setUniformVector2i(String uniform, Vector2i vec) {
-        glUniform2i(getUniformLoc(uniform), vec.x, vec.y);
+        this.uniforms.add(new UniformProp(uniform, vec));
     }
 
-    public void updatePVMatrix(Matrix4f proj, Matrix4f view) {
-        setUniformMatrix4f("m_proj", proj);
-        setUniformMatrix4f("m_view", view);
+    public void updateViewport(Viewport viewport) {
+        this.uniforms.add(new UniformProp("m_proj", viewport.getProjection()));
+        this.uniforms.add(new UniformProp("m_view", viewport.getView()));
+        this.uniforms.add(new UniformProp("m_pos", viewport.getPosition()));
+        this.uniforms.add(new UniformProp("m_rot", viewport.getRotation()));
     }
 
     public void updateModelMatrix(Matrix4f model) {
-        setUniformMatrix4f("m_model", model);
+        this.uniforms.add(new UniformProp("m_model", model));
     }
 
     public void activateTexture(String uniform, int offset, int id) {
@@ -175,12 +187,15 @@ public class ShaderProgram implements IPipeline {
         glBindTexture(GL_TEXTURE_2D, id);
     }
 
-    public void addTextureUniform(String uniform, int id) {
+    public void setTextureUniform(String uniform, int id) {
         this.textures.add(new TextureUniform(uniform, id));
     }
 
     public void setMainTexture(Texture texture) {
-        this.mainTexture = texture.getTextureId();
+        if (texture == null) {
+            this.mainTexture = 0;
+        }
+        else this.mainTexture = texture.getTextureId();
     }
 
     public int getProgramId() {
@@ -190,40 +205,45 @@ public class ShaderProgram implements IPipeline {
     public void use() {
         Engine engine = Engine.getInstance();
         Renderer renderer = engine.getRenderer();
+        Framebuffer framebuffer = renderer.getMainFramebuffer();
         renderer.useShader(this);
 
         glUniform3f(getUniformLoc("screenResolution"), engine.getDisplay().getWidth(), engine.getDisplay().getHeight(), engine.getDisplay().getAspectRatio());
+        glUniform1f(getUniformLoc("m_time"), time);
 
         // Setup and bind textures for the shader
-//        System.out.println(mainTexture);
-        this.activateTexture("texture0", 0, mainTexture);
-        this.activateTexture("framebufferTexture", 1, renderer.getRenderTextureId());
+        this.activateTexture("tex0", 0, mainTexture);
+        this.uniforms.add(new UniformProp("isTex0Set", mainTexture > 0));
         this.mainTexture = Texture.MISSING.getTextureId();
 
-        int i = 2;
+        // Set all uniforms
+        for (UniformProp uniform: uniforms) {
+            int loc = getUniformLoc(uniform.name);
+            if (uniform.value instanceof Matrix4f mat) {
+                try (MemoryStack stack = MemoryStack.stackPush()) {
+                    FloatBuffer fb = mat.get(stack.mallocFloat(16));
+                    glUniformMatrix4fv(loc, false, fb);
+                }
+            }
+            else if (uniform.value instanceof Float v) glUniform1f(loc, v);
+            else if (uniform.value instanceof Integer v) glUniform1i(loc, v);
+            else if (uniform.value instanceof Boolean v) glUniform1i(loc, v ? 1 : 0);
+            else if (uniform.value instanceof Vector2f v) glUniform2f(loc, v.x, v.y);
+            else if (uniform.value instanceof Vector3f v) glUniform3f(loc, v.x, v.y, v.z);
+            else if (uniform.value instanceof Vector2i v) glUniform2i(loc, v.x, v.y);
+            else if (uniform.value instanceof Vector3i v) glUniform3i(loc, v.x, v.y, v.z);
+            else if (uniform.value instanceof Vector4i v) glUniform4i(loc, v.x, v.y, v.z, v.w);
+            else if (uniform.value instanceof Vector4f v) glUniform4f(loc, v.x, v.y, v.z, v.w);
+        }
+        this.uniforms.clear();
+
+        int i = 1;
         for (TextureUniform tex: this.textures) {
             this.activateTexture(tex.uniform, i++, tex.textureId);
         }
-    }
-
-    @Override
-    public void pipelineInit(PipelineInstance instance) throws EngineException {
-        bake();
-    }
-
-    @Override
-    public void pipelineCleanup(PipelineInstance instance) {
-        cleanup();
-    }
-
-    @Override
-    public void pipelineRender(RenderContext renderContext, PipelineInstance instance) {
-        this.use();
-    }
-
-    @Override
-    public int pipelineFlags() {
-        return 0;
+        this.textures.clear();
+        this.textures.add(new TextureUniform("fbTex", framebuffer.getFrameTexture()));
+        this.textures.add(new TextureUniform("depthTex", framebuffer.getDepthTexture()));
     }
 
     @Override
@@ -233,6 +253,13 @@ public class ShaderProgram implements IPipeline {
         return shd.programId == programId;
     }
 
+    @Override
+    public void tick(Timer timer) {
+        this.time += 1f / timer.getTickPerSecond();
+    }
+
     private record TextureUniform(String uniform, int textureId) {}
+
+    private record UniformProp(String name, Object value) {}
 
 }

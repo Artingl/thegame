@@ -11,6 +11,9 @@ public class Profiler {
 
     private float fps = -1;
     private float frameTime = -1;
+    private float calculatedGpuTime = -1;
+    private float gpuTime = 0;
+    private int gpuTimeDiv = 0;
     private long timeSinceUpdate = 0;
 
 
@@ -22,9 +25,10 @@ public class Profiler {
     }
 
     /**
-     * Gets called every frame so the profiler can make its calcualtions
+     * Gets called every frame so the profiler can make its calculations
      * */
     public void frame() {
+        gpuTimeDiv++;
         lastTime = newTime;
         newTime = System.nanoTime();
 
@@ -34,6 +38,10 @@ public class Profiler {
             this.timeSinceUpdate = System.currentTimeMillis();
             this.fps = 1000 / getFrameTime();
             this.frameTime = (newTime - lastTime) / 1000000f;
+
+            this.calculatedGpuTime = this.gpuTime / gpuTimeDiv;
+            this.gpuTime = 0;
+            this.gpuTimeDiv = 0;
         }
     }
 
@@ -43,6 +51,10 @@ public class Profiler {
 
     public float getFrameTime() {
         return this.frameTime;
+    }
+
+    public float getGpuTime() {
+        return calculatedGpuTime;
     }
 
     /**
@@ -71,6 +83,10 @@ public class Profiler {
      * */
     public int getCounter(Task task) {
         return this.counter.get(task);
+    }
+
+    public void addGpuTime(float value) {
+        this.gpuTime += value;
     }
 
     public enum Task {

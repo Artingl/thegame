@@ -4,8 +4,11 @@ import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.misc.Color;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryStack;
+import org.w3c.dom.Attr;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -16,8 +19,73 @@ import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL20C.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL30C.glVertexAttribIPointer;
+import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 public class VerticesBuffer {
+
+    // -------------
+
+    public static VerticesBuffer wrap(Matrix4f v) {
+        VerticesBuffer buffer = new VerticesBuffer(Attribute.MAT4F);
+        buffer.addAttribute(v);
+        return buffer;
+    }
+
+    public static VerticesBuffer wrap(Vector3f value) {
+            VerticesBuffer buffer = new VerticesBuffer(Attribute.VEC3F);
+            buffer.addAttribute(value);
+        return buffer;
+    }
+
+    public static VerticesBuffer wrap(Color value) {
+        VerticesBuffer buffer = new VerticesBuffer(Attribute.VEC4F);
+        buffer.addAttribute(value);
+        return buffer;
+    }
+
+    public static VerticesBuffer wrap(Vector2f value) {
+        VerticesBuffer buffer = new VerticesBuffer(Attribute.VEC2F);
+        buffer.addAttribute(value);
+        return buffer;
+    }
+
+    public static VerticesBuffer wrap(Vector3i value) {
+        VerticesBuffer buffer = new VerticesBuffer(Attribute.VEC3I);
+        buffer.addAttribute(value);
+        return buffer;
+    }
+
+    public static VerticesBuffer wrap(Vector2i value) {
+        VerticesBuffer buffer = new VerticesBuffer(Attribute.VEC2I);
+        buffer.addAttribute(value);
+        return buffer;
+    }
+
+    public static VerticesBuffer wrap(Vector4i value) {
+        VerticesBuffer buffer = new VerticesBuffer(Attribute.VEC4I);
+        buffer.addAttribute(value);
+        return buffer;
+    }
+
+    public static VerticesBuffer wrap(Vector4f value) {
+        VerticesBuffer buffer = new VerticesBuffer(Attribute.VEC4F);
+        buffer.addAttribute(value);
+        return buffer;
+    }
+
+    public static VerticesBuffer wrap(float value) {
+        VerticesBuffer buffer = new VerticesBuffer(Attribute.FLOAT);
+        buffer.addAttribute(value);
+        return buffer;
+    }
+
+    public static VerticesBuffer wrap(int value) {
+        VerticesBuffer buffer = new VerticesBuffer(Attribute.INT);
+        buffer.addAttribute(value);
+        return buffer;
+    }
+
+    // -------------
 
     public static final VerticesBuffer EMPTY = new VerticesBuffer(Attribute.INT);
 
@@ -66,6 +134,18 @@ public class VerticesBuffer {
      */
     public final List<Object> getFields() {
         return fields;
+    }
+
+    public VerticesBuffer addAttribute(Matrix4f value) {
+        synchronized (this.fields) {
+            synchronized (this.fieldsDescription) {
+                this.fieldsDescription.add(Attribute.MAT4F);
+                this.fields.add(value);
+                this.size += Attribute.MAT4F.size;
+            }
+        }
+
+        return this;
     }
 
     public VerticesBuffer addAttribute(Vector3f value) {
@@ -201,58 +281,6 @@ public class VerticesBuffer {
     }
 
     /**
-     * Make float array of vertices in this buffer
-     *
-     * @return The constructed float array
-     */
-    public float[] makeFloatArray() {
-        float[] buffer = new float[getBytesSize() / 4];
-        int idx = 0;
-
-        for (int i = 0; i < this.fields.size(); i++) {
-            Attribute attribute = this.fieldsDescription.get(i);
-            Object value = this.fields.get(i);
-
-            switch (attribute) {
-                case INT -> buffer[idx++] = (Integer) value;
-                case FLOAT -> buffer[idx++] = (Float) value;
-                case VEC2F -> {
-                    buffer[idx++] = ((Vector2f) value).x;
-                    buffer[idx++] = ((Vector2f) value).y;
-                }
-                case VEC3F -> {
-                    buffer[idx++] = ((Vector3f) value).x;
-                    buffer[idx++] = ((Vector3f) value).y;
-                    buffer[idx++] = ((Vector3f) value).z;
-                }
-                case VEC4F -> {
-                    buffer[idx++] = ((Vector4f) value).x;
-                    buffer[idx++] = ((Vector4f) value).y;
-                    buffer[idx++] = ((Vector4f) value).z;
-                    buffer[idx++] = ((Vector4f) value).w;
-                }
-                case VEC2I -> {
-                    buffer[idx++] = ((Vector2i) value).x;
-                    buffer[idx++] = ((Vector2i) value).y;
-                }
-                case VEC3I -> {
-                    buffer[idx++] = ((Vector3i) value).x;
-                    buffer[idx++] = ((Vector3i) value).y;
-                    buffer[idx++] = ((Vector3i) value).z;
-                }
-                case VEC4I -> {
-                    buffer[idx++] = ((Vector4i) value).x;
-                    buffer[idx++] = ((Vector4i) value).y;
-                    buffer[idx++] = ((Vector4i) value).z;
-                    buffer[idx++] = ((Vector4i) value).w;
-                }
-            }
-        }
-
-        return buffer;
-    }
-
-    /**
      * Add indices into the buffer
      *
      * @param indices Indices to be added
@@ -265,9 +293,27 @@ public class VerticesBuffer {
     /**
      * Writes vertices to the GL buffer and sets up attributes for the buffer.
      *
+     * @param vao The VAO buffer
+     * @param vbo The VBO buffer
+     * @param ebo The EBO buffer
+     *
      * @return Either amount of vertices if no indices provided or amount if indices to be rendered
      */
     public int bake(int vao, int vbo, int ebo) {
+        return bake(vao, vbo, ebo, 0);
+    }
+
+    /**
+     * Writes vertices to the GL buffer and sets up attributes with an index offset for the buffer.
+     *
+     * @param vao The VAO buffer
+     * @param vbo The VBO buffer
+     * @param ebo The EBO buffer
+     * @param indexOffset The offset for the attributes
+     *
+     * @return Either amount of vertices if no indices provided or amount if indices to be rendered
+     */
+    public int bake(int vao, int vbo, int ebo, int indexOffset) {
         return synchronizedFields(() -> {
             // Put all fields to the buffer
             ByteBuffer buffer = BufferUtils.createByteBuffer(getBytesSize());
@@ -308,18 +354,37 @@ public class VerticesBuffer {
                         buffer.putInt(((Vector4i) value).z);
                         buffer.putInt(((Vector4i) value).w);
                     }
+                    case MAT4F -> {
+                        buffer.putFloat(((Matrix4f) value).m00());
+                        buffer.putFloat(((Matrix4f) value).m01());
+                        buffer.putFloat(((Matrix4f) value).m02());
+                        buffer.putFloat(((Matrix4f) value).m03());
+                        buffer.putFloat(((Matrix4f) value).m10());
+                        buffer.putFloat(((Matrix4f) value).m11());
+                        buffer.putFloat(((Matrix4f) value).m12());
+                        buffer.putFloat(((Matrix4f) value).m13());
+                        buffer.putFloat(((Matrix4f) value).m20());
+                        buffer.putFloat(((Matrix4f) value).m21());
+                        buffer.putFloat(((Matrix4f) value).m22());
+                        buffer.putFloat(((Matrix4f) value).m23());
+                        buffer.putFloat(((Matrix4f) value).m30());
+                        buffer.putFloat(((Matrix4f) value).m31());
+                        buffer.putFloat(((Matrix4f) value).m32());
+                        buffer.putFloat(((Matrix4f) value).m33());
+                    }
                 }
             }
             buffer.flip();
 
-            glBindVertexArray(vao);
+            if (vao != -1)
+                glBindVertexArray(vao);
 
             // Send data to the GPU
             glBindBuffer(GL_ARRAY_BUFFER, vbo);
             glBufferData(GL_ARRAY_BUFFER, buffer, GL_STATIC_DRAW);
 
             // Send indices to the GPU if we have them
-            if (hasIndices()) {
+            if (hasIndices() && ebo != -1) {
                 int[] indices = new int[this.indices.size()];
                 for (int i = 0; i < indices.length; i++)
                     indices[i] = this.indices.get(i);
@@ -333,19 +398,36 @@ public class VerticesBuffer {
                 stride += attribute.size;
 
             // Tell OpenGL types of our attributes
-            int ptr = 0, index = 0;
+            int ptr = 0, index = indexOffset;
             for (Attribute attribute : this.attributes) {
-                if (attribute.type == GL_FLOAT) {
-                    glVertexAttribPointer(index, attribute.size / 4, GL_FLOAT, false, stride, ptr);
-                } else {
-                    glVertexAttribIPointer(index, attribute.size / 4, attribute.type, stride, ptr);
+                if (attribute.isMatrix) {
+                    int i0 = index++, i1 = index++, i2 = index++, i3 = index++;
+                    glVertexAttribPointer(i0, 4, GL_FLOAT, false, stride, ptr + 0);
+                    glVertexAttribPointer(i1, 4, GL_FLOAT, false, stride, ptr + 16);
+                    glVertexAttribPointer(i2, 4, GL_FLOAT, false, stride, ptr + 32);
+                    glVertexAttribPointer(i3, 4, GL_FLOAT, false, stride, ptr + 48);
+                    glEnableVertexAttribArray(i0);
+                    glEnableVertexAttribArray(i1);
+                    glEnableVertexAttribArray(i2);
+                    glEnableVertexAttribArray(i3);
+                    glVertexAttribDivisor(i0, 1);
+                    glVertexAttribDivisor(i1, 1);
+                    glVertexAttribDivisor(i2, 1);
+                    glVertexAttribDivisor(i3, 1);
                 }
-                glEnableVertexAttribArray(index++);
+                else {
+                    if (attribute.type == GL_FLOAT) {
+                        glVertexAttribPointer(index, attribute.size / 4, GL_FLOAT, false, stride, ptr);
+                    } else {
+                        glVertexAttribIPointer(index, attribute.size / 4, attribute.type, stride, ptr);
+                    }
+                    glEnableVertexAttribArray(index++);
+                }
                 ptr += attribute.size;
             }
 
             buffer.clear();
-            if (hasIndices())
+            if (hasIndices() && ebo != -1)
                 return this.indices.size();
 
             return this.fields.size() / this.attributes.length;
@@ -399,21 +481,24 @@ public class VerticesBuffer {
     }
 
     public enum Attribute {
-        FLOAT(4, GL_FLOAT),
-        INT(4, GL_INT),
-        VEC3F(12, GL_FLOAT),
-        VEC2F(8, GL_FLOAT),
-        VEC2I(8, GL_INT),
-        VEC3I(12, GL_INT),
-        VEC4F(16, GL_FLOAT),
-        VEC4I(16, GL_INT);
+        FLOAT(4, GL_FLOAT, false),
+        INT(4, GL_INT, false),
+        VEC3F(12, GL_FLOAT, false),
+        VEC2F(8, GL_FLOAT, false),
+        VEC2I(8, GL_INT, false),
+        VEC3I(12, GL_INT, false),
+        VEC4F(16, GL_FLOAT, false),
+        VEC4I(16, GL_INT, false),
+        MAT4F(64, GL_FLOAT, true);
 
         public final int size;
         public final int type;
+        public final boolean isMatrix;
 
-        Attribute(int size, int type) {
+        Attribute(int size, int type, boolean isMatrix) {
             this.size = size;
             this.type = type;
+            this.isMatrix = isMatrix;
         }
     }
 }

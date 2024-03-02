@@ -2,26 +2,23 @@ package dev.artingl.Engine.resources.texture;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
-import dev.artingl.Engine.EngineEventListener;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.resources.Resource;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.BufferUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.glDeleteTextures;
 
-public class TextureManager implements EngineEventListener {
+public class TextureManager {
 
     private final Logger logger;
     private final Map<Resource, Texture> textures;
@@ -33,12 +30,12 @@ public class TextureManager implements EngineEventListener {
         this.allNamespaces = new ArrayList<>();
     }
 
-    public void init() {
-        Engine.getInstance().subscribeEngineEvents(this);
+    public void cleanup() {
+        for (Texture texture: this.textures.values())
+            texture.cleanup();
     }
 
-    public void cleanup() {
-        Engine.getInstance().unsubscribeEngineEvents(this);
+    public void init() throws IOException {
     }
 
     /**
@@ -99,10 +96,14 @@ public class TextureManager implements EngineEventListener {
             directory = Paths.get(uri);
         }
 
-        // Load missing texture first
+        // Always load internal textures first
         Texture missing = Texture.MISSING;
         missing.updateTexture(new Resource("engine", "textures/internal/missing.jpg"));
         this.textures.put(new Resource("engine", "internal/missing"), missing);
+
+        Texture uv_test = Texture.UV_TEST;
+        uv_test.updateTexture(new Resource("engine", "textures/internal/uv_test.jpg"));
+        this.textures.put(new Resource("engine", "internal/uv_test"), uv_test);
 
         // Load all textures
         try (Stream<Path> walk = Files.walk(directory, 3).filter(Files::isRegularFile)) {
@@ -119,19 +120,24 @@ public class TextureManager implements EngineEventListener {
                         resource.getNamespace(),
                         fileName.replaceFirst("[.][^.]+$", ""));
 
+                if (this.textures.containsKey(texture))
+                    continue;
+
                 this.logger.log(LogLevel.INFO, "Loading texture %s from %s", texture, textureSource);
                 this.textures.put(texture, loadTexture(textureSource));
             }
         }
     }
 
-    @Override
-    public void onReload() throws EngineException, IOException {
+    public void reload() throws EngineException, IOException {
         Engine.getInstance().getLogger().log(LogLevel.INFO, "Reloading textures for all namespaces");
 
         // Cleanup all textures
-        for (Texture texture: this.textures.values())
+        for (Texture texture: this.textures.values()) {
+            if (texture.getTextureId() == Texture.MISSING.getTextureId())
+                continue;
             glDeleteTextures(texture.getTextureId());
+        }
         this.textures.clear();
 
         // Initialize textures again

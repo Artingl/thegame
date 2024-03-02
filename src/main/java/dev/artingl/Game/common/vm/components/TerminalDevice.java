@@ -1,5 +1,7 @@
 package dev.artingl.Game.common.vm.components;
 
+import dev.artingl.Engine.Engine;
+import dev.artingl.Engine.resources.Resource;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -40,11 +42,14 @@ public class TerminalDevice extends UARTDevice {
         this.buffer += new String(data);
         this.buffer = this.buffer.substring(Math.max(0, buffer.length() - (width * height)));
 
+        Engine engine = Engine.getInstance();
+        Font font = engine.getRenderer().getFontManager().getAWTFont(new Resource("thegame", "font/main"), 12);
+
         Graphics graphics = this.firstBuffer.getGraphics();
         graphics.clearRect(0, 0, firstBuffer.getWidth(), firstBuffer.getHeight());
 
         graphics.setColor(Color.WHITE);
-        graphics.setFont(new Font("Consolas", Font.BOLD, 12));
+        graphics.setFont(font);
 
         int offset = 0;
         String[] lines = this.buffer.split("\n");

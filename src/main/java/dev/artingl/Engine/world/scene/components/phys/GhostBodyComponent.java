@@ -38,8 +38,10 @@ public class GhostBodyComponent extends Component implements BodyComponent {
         if (collider == null || collider.getShape() == null)
             return;
 
-        if (body == null)
+        if (body == null) {
             this.body = new GhostControl(collider.getShape());
+            this.body.setUserObject(this);
+        }
 
         PhysicsSpace space = node.getScene().getPhysicsSpace();
         TransformComponent transform = node.getTransform();

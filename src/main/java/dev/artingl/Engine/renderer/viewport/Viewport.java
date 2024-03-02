@@ -18,7 +18,6 @@ public class Viewport {
     private final RenderContext renderContext;
     private final Matrix4f view, proj;
     private final FrustumIntersection frustum;
-
     private IViewport currentViewport;
 
     public Viewport(Logger logger, Renderer renderer) {
@@ -70,8 +69,8 @@ public class Viewport {
         float aspect = currentViewport.getAspect();
         float width = currentViewport.getWidth();
         float height = currentViewport.getHeight();
-        float zNear = currentViewport.getZNear();
-        float zFar = currentViewport.getZFar();
+        float nearPlane = currentViewport.getNearPlane();
+        float farPlane = currentViewport.getFarPlane();
         float size = currentViewport.getSize();
 
         // Update view matrix based on the values from current viewport
@@ -87,12 +86,12 @@ public class Viewport {
             this.proj.set(
                     new Matrix4f().perspective(
                             (float) Math.toRadians(fov), aspect,
-                            zNear, zFar)
+                            nearPlane, farPlane)
             );
         } else {
             float halfw = (width * size) / 2, halfh = (height * size) / 2;
             this.proj.set(
-                    new Matrix4f().ortho(-halfw, halfw, -halfh, halfh, zNear, zFar)
+                    new Matrix4f().ortho(-halfw, halfw, -halfh, halfh, nearPlane, farPlane)
             );
         }
 
@@ -102,16 +101,30 @@ public class Viewport {
         this.proj.rotate((float) Math.toRadians(rot.y), 0, 1, 0);
         this.proj.rotate((float) Math.toRadians(rot.z), 0, 0, 1);
 
-        // Clear the screen with our color
-        Color color = currentViewport.getBackgroundColor();
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(color.red() / 255.0f, color.green() / 255.0f, color.blue() / 255.0f, color.alpha() / 255.0f);
-
         this.frustum.set(new Matrix4f(proj).mul(view));
     }
 
-    public float test = -1;
+    /**
+     * Get viewport's position
+     * */
+    public Vector3f getPosition() {
+        if (currentViewport == null) {
+            return new Vector3f();
+        }
+
+        return currentViewport.getPosition();
+    }
+
+    /**
+     * Get viewport's rotation
+     * */
+    public Vector3f getRotation() {
+        if (currentViewport == null) {
+            return new Vector3f();
+        }
+
+        return currentViewport.getRotation();
+    }
 
     /**
      * Returns current background color of the viewport
@@ -129,7 +142,7 @@ public class Viewport {
      * @param program The target shader program
      */
     public void uploadMatrices(ShaderProgram program) {
-        program.updatePVMatrix(proj, view);
+        program.updateViewport(this);
     }
 
     /**
@@ -154,5 +167,19 @@ public class Viewport {
             return false;
 
         return currentViewport.usePostprocessing();
+    }
+
+    /**
+     * Clear the viewport screen
+     * */
+    public void clear() {
+        if (currentViewport == null)
+            return;
+
+        // Clear the screen with our color
+        Color color = currentViewport.getBackgroundColor();
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(color.red() / 255.0f, color.green() / 255.0f, color.blue() / 255.0f, color.alpha() / 255.0f);
     }
 }

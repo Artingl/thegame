@@ -6,7 +6,7 @@ plugins {
 group = 'dev.artingl'
 version = '1.0-SNAPSHOT'
 
-project.ext.jmeVersion = '[3.1,)'
+project.ext.jmeVersion = '3.3.2-stable'
 project.ext.lwjglVersion = "3.3.2-SNAPSHOT"
 project.ext.lwjglNatives = "natives-windows"  // "natives-macos"
 project.ext.jomlVersion = "1.10.2"
@@ -76,7 +76,8 @@ dependencies {
 
 jar {
     manifest {
-        attributes "Main-Class": "dev.artingl.Start"
+        attributes "Main-Class": "dev.artingl.Bootstrapper"
+        attributes 'Multi-Release': 'true'
     }
 }
 
