@@ -21,14 +21,6 @@ public class FurryRendererComponent extends Component {
             new Shader(ShaderType.FRAGMENT, new Resource("engine", "shaders/furry/furry.frag"))
     );
 
-    static {
-        try {
-            FURRY_PROGRAM.bake();
-        } catch (EngineException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public boolean isEnabled = true;
     public Type type;
     public Color color;
@@ -62,6 +54,9 @@ public class FurryRendererComponent extends Component {
 
     @Override
     public void render(SceneNode node, RenderContext context) {
+        if (!FURRY_PROGRAM.isBaked())
+            FURRY_PROGRAM.bake();
+
         super.render(node, context);
         if (!this.meshComponent.enableRendering || !this.isEnabled)
             return;

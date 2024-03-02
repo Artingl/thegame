@@ -9,11 +9,4 @@ public interface IPipeline {
     void pipelineInit(PipelineInstance instance) throws EngineException;
     void pipelineRender(RenderContext renderContext, PipelineInstance instance) throws EngineException;
 
-    int pipelineFlags();
-
-    class Flags {
-        public static final int RENDER_DIRECTLY = 1 << 0;
-
-    }
-
 }

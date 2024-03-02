@@ -7,18 +7,27 @@
 
 layout (location = 0) out vec4 fragColor;
 
-uniform sampler2D texture0;
+uniform sampler2D tex0;
 uniform float lightLevel;
 uniform vec3 skyColor;
 uniform float currentRadius;
+uniform float m_time;
 
 in vec3 fragPosition;
 in vec3 worldPosition;
+in vec2 uv;
 
 float mod289(float x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec4 mod289(vec4 x ){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec4 perm(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
 float rand(vec2 c) { return fract(sin(dot(c.xy ,vec2(12.9898,78.233))) * 43758.5453); }
+
+// https://www.shadertoy.com/view/4tXyWN
+float hash(uvec2 x) {
+    uvec2 q = 1103515245U * ((x >> 1U) ^ (x.yx));
+    uint  n = 1103515245U * ((q.x) ^ (q.y >> 3U));
+    return float(n) * (1.0 / float(0xffffffffU));
+}
 
 float genericNoise(vec3 p) {
     vec3 a = floor(p);
@@ -42,7 +51,7 @@ float genericNoise(vec3 p) {
     return o4.y * d.y + o4.x * (1.0 - d.y);
 }
 
-float noise(vec2 p, float freq ){
+float noise(vec2 p, float freq) {
     float unit = 12/freq;
     vec2 ij = floor(p/unit);
     vec2 xy = mod(p,unit)/unit;
@@ -91,15 +100,22 @@ vec3 renderPlanet(float radius, vec3 position, vec3 color) {
     return planetColor;
 }
 
+vec3 stars(vec2 iuv) {
+    if (hash(uvec2(iuv)) < 0.003) {
+        return vec3(10.0, 10.0, 10.0) * genericNoise(vec3(floor(iuv / 16) * 16, m_time));
+    }
+    return vec3(0.0, 0.0, 0.0);
+}
+
 void main() {
-    float starColor = genericNoise(fragPosition + round(worldPosition / 1024)) > 0.95 ? 0.4 : 0;
+    vec3 starColor = stars(uv * currentRadius * 3);
     starColor *= 1 - lightLevel;
 
     // Calculate color for the sun and moon
     vec3 sunColor = renderPlanet(30, vec3(currentRadius, 0, 0), SUN_COLOR);
     vec3 moonColor = renderPlanet(30, vec3(-currentRadius, 0, 0), MOON_COLOR);
     if (sunColor.x != 0 || moonColor.x != 0) {
-        starColor = 0;
+        starColor = vec3(0);
     }
 
     float light = min(1, lightLevel + 0.1f);

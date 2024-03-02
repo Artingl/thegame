@@ -1,6 +1,7 @@
 package dev.artingl.Game.scene;
 
 import com.jme3.bullet.collision.PhysicsRayTestResult;
+import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.renderer.models.IModel;
 import dev.artingl.Engine.renderer.mesh.ModelMesh;
@@ -56,8 +57,15 @@ public class MapScene extends BaseScene {
     private final CrosshairNode crosshair;
     private final SoundComponent nightAmbientSound;
     private final SoundComponent dayAmbientSound;
+
     public MapScene() {
         Level level = getLevel();
+
+        SphereSprite testSphere = new SphereSprite(1, Color.from((int) (14.75f * 255), (int) (9.12f * 255), (int) (1.71f * 255)), null);
+        testSphere.getTransform().position.x = 10;
+        testSphere.getTransform().position.y = 6;
+        testSphere.getTransform().position.z = -18;
+        this.addNode(testSphere);
 
         /* Initialize and add nodes to the scene */
         this.sky = new SkyNode(level.getSky());

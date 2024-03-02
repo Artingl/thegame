@@ -7,6 +7,7 @@ import dev.artingl.Engine.debug.Profiler;
 import dev.artingl.Engine.input.Input;
 import dev.artingl.Engine.input.InputKeys;
 import dev.artingl.Engine.input.InputListener;
+import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.resources.Options;
 import dev.artingl.Engine.resources.ResourceManager;
@@ -15,13 +16,14 @@ import dev.artingl.Engine.timer.TickListener;
 import dev.artingl.Engine.timer.Timer;
 import dev.artingl.Engine.world.audio.SoundsManager;
 import dev.artingl.Engine.world.scene.SceneManager;
+import org.apache.commons.io.FileUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLDebugMessageCallback;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -75,7 +77,7 @@ public class Engine implements TickListener, InputListener {
         this.profiler = new Profiler();
         this.threadsManager = new ThreadsManager();
         this.options = new Options(this.logger);
-        this.display = new Display(this.logger, this.input, "Engine - Untitled Window", 1280, 720);
+        this.display = new Display(this.logger, this.input, "Engine - Untitled Window", 1400, 900);
         this.renderer = new Renderer(this.logger);
         this.resourceManager = new ResourceManager(this, this.logger);
         this.sceneManager = new SceneManager();
@@ -160,7 +162,7 @@ public class Engine implements TickListener, InputListener {
         return namespaces;
     }
 
-    public void loadLibs() throws IOException {
+    public void loadLibs() throws Exception {
         this.logger.log(LogLevel.WARNING, "!!! IF YOU CRASHED AFTER THIS LOG, CHECK PATHS TO LIB FOLDERS !!!");
 
         // Load libs from all folders
@@ -171,7 +173,25 @@ public class Engine implements TickListener, InputListener {
             try (Stream<Path> walk = Files.walk(directory, 3).filter(Files::isRegularFile)) {
                 for (Iterator<Path> it = walk.iterator(); it.hasNext();) {
                     Path path = it.next();
-                    this.logger.log(LogLevel.INFO, "Loading library: " + path.toString());
+                    if (!path.toString().endsWith(".dll"))
+                        continue;
+                    this.logger.log(LogLevel.INFO, "Loading library: " + path);
+
+                    // Verify checksum before loading
+                    String checksum = Utils.getMD5Checksum(path.toString());
+                    File checksumFile = new File(path + ".checksum");
+
+                    if (checksumFile.isFile()) {
+                        String validChecksum = FileUtils.readFileToString(checksumFile, StandardCharsets.UTF_8);
+                        if (!validChecksum.equals(checksum)) {
+                            throw new EngineException("Invalid checksum for '" + path + "!' '" + checksum + "' != '" + validChecksum + "'");
+                        }
+                    }
+                    else {
+                        this.logger.log(LogLevel.WARNING, "No checksum found for '%s'. Checksum: %s", path.toString(), checksum);
+                    }
+
+                    // Load the lib
                     System.load(path.toString());
                 }
             }

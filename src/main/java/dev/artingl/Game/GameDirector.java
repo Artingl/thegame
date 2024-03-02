@@ -2,10 +2,12 @@ package dev.artingl.Game;
 
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.Engine;
+import dev.artingl.Engine.renderer.postprocessing.effects.PostprocessBloomEffect;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.world.scene.SceneManager;
 import dev.artingl.Game.common.vm.Sedna;
 import dev.artingl.Game.registries.LevelsRegistry;
+import dev.artingl.Game.render.postprocess.PostprocessPaletteEffect;
 import dev.artingl.Game.scene.FurryScene;
 import dev.artingl.Game.scene.MapScene;
 import dev.artingl.Game.level.Level;
@@ -62,7 +64,8 @@ public class GameDirector {
         this.engine.getDisplay().setVsync(false);
 
         /* Add post-processing effects */
-//        this.engine.getRenderer().getPostprocessing().addEffect(new Bloom());
+        this.engine.getRenderer().getPostprocessing().addEffect(new PostprocessBloomEffect());
+        this.engine.getRenderer().getPostprocessing().addEffect(new PostprocessPaletteEffect());
 
         /* Register levels */
         this.levelsRegistry.registerLevel(new Resource("thegame", "level/park"), new Level());

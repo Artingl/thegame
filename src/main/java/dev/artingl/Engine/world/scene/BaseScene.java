@@ -9,6 +9,7 @@ import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.input.InputListener;
 import dev.artingl.Engine.input.Input;
 import dev.artingl.Engine.misc.Color;
+import dev.artingl.Engine.misc.Spinlock;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.world.Dimension;
 import dev.artingl.Engine.renderer.RenderContext;
@@ -27,6 +28,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class BaseScene implements TickListener, InputListener {
     private final Logger logger;
     private final Map<UUID, SceneNode> nodesList;
+    private final Map<Layers, List<SceneNode>> renderNodes;
 
     private final Collection<Runnable> spaceCallbacks;
     private final Collection<SceneNode> lazyNodes;
@@ -44,6 +46,10 @@ public class BaseScene implements TickListener, InputListener {
         this.logger = getEngine().getLogger();
         this.isInitialized = false;
         this.dimension = new Dimension();
+        this.renderNodes = new ConcurrentHashMap<>();
+
+        for (Layers layer: Layers.values())
+            this.renderNodes.put(layer, new ArrayList<>());
 
         this.physicsSpace = new PhysicsSpace();
         this.physicsSpace.setGravity(new Vector3f(0, -14f, 0));
@@ -95,6 +101,7 @@ public class BaseScene implements TickListener, InputListener {
         }
 
         node.attach(makeNametag(node), this);
+        this.renderNodes.get(node.getLayer()).add(node);
         this.nodesList.put(node.getUUID(), node);
         this.lazyNodes.add(node);
 
@@ -118,6 +125,7 @@ public class BaseScene implements TickListener, InputListener {
             child.attach(makeNametag(child), this, node);
             node.addChild(child.getUUID());
             child.setLayer(node.getLayer());
+            this.renderNodes.get(child.getLayer()).add(child);
             this.nodesList.put(child.getUUID(), child);
             this.lazyNodes.add(child);
 
@@ -159,6 +167,9 @@ public class BaseScene implements TickListener, InputListener {
             getEngine().glContext(node::cleanup);
             node.detach();
             this.nodesList.remove(node.getUUID());
+
+            for (List<SceneNode> nodes: this.renderNodes.values())
+                nodes.remove(node);
 
             /* If we have camera on the scene and the node we want to
              * remove has the same ID as the main camera, set the main camera to null
@@ -270,33 +281,45 @@ public class BaseScene implements TickListener, InputListener {
             return;
         }
 
-        synchronized (this.nodesList) {
-            // Render nodes
-            List<SceneNode> sortedNodes = new ArrayList<>(nodesList.values());
-//        sortedNodes.sort(new SceneNodesSorter(mainCamera));
+        synchronized (this.renderNodes) {
+            // Render main nodes
+            List<SceneNode> mainNodes = this.renderNodes.get(Layers.MAIN);
+            List<SceneNode> uiNodes = this.renderNodes.get(Layers.UI);
+            mainNodes.sort(new SceneNodesSorter(mainCamera));
+            uiNodes.sort(new SceneNodesSorter(uiCamera));
 
-            // TODO: make more efficient way of iterating through nodes
+            for (SceneNode node: mainNodes) {
+                if (!node.getLayer().equals(Layers.MAIN)) {
+                    // Move node to a different layer
+                    mainNodes.remove(node);
+                    if (!this.renderNodes.get(node.getLayer()).contains(node))
+                        this.renderNodes.get(node.getLayer()).add(node);
+                    continue;
+                }
 
-            // Firstly render all nodes on the main layer
-            for (SceneNode node : sortedNodes) {
-                if (node.getLayer() == Layers.MAIN)
-                    node.render(context);
+                node.render(context);
             }
 
-            // Then render the UI layer with proper 2D camera
+            // Render UI nodes with proper 2D camera
             Viewport viewport = context.getViewport();
             viewport.setViewport(this.uiCamera);
             viewport.update();
-            for (SceneNode node : sortedNodes) {
+            for (SceneNode node: uiNodes) {
+                if (!node.getLayer().equals(Layers.UI)) {
+                    // Move node to a different layer
+                    mainNodes.remove(node);
+                    if (!this.renderNodes.get(node.getLayer()).contains(node))
+                        this.renderNodes.get(node.getLayer()).add(node);
+                    continue;
+                }
+
                 // Make sure the child node has the same layer as the parent
                 if (node.getParent() != null)
                     node.setLayer(node.getParent().getLayer());
-
-                if (node.getLayer() == Layers.UI)
-                    node.render(context);
+                node.render(context);
             }
 
-            // Set the back the main camera
+            // Set back the main camera
             viewport.setViewport(this.mainCamera);
             viewport.update();
         }
@@ -315,6 +338,9 @@ public class BaseScene implements TickListener, InputListener {
 
     @Override
     public void tick(Timer timer) {
+        this.physicsSpace.update(1 / timer.getTickPerSecond());
+        this.physicsSpace.distributeEvents();
+
         // Call all callbacks which expect the space not to be locked
         synchronized (this.spaceCallbacks) {
             for (Runnable callback : this.spaceCallbacks) {
@@ -326,12 +352,6 @@ public class BaseScene implements TickListener, InputListener {
         // Call tick for each node
         for (SceneNode node: nodesList.values())
             node.tick(timer);
-
-//        this.physicsSpace.setMaxSubSteps(1);
-        synchronized (this.nodesList) {
-            this.physicsSpace.update(1 / timer.getTickPerSecond());
-            this.physicsSpace.distributeEvents();
-        }
     }
 
     @Override

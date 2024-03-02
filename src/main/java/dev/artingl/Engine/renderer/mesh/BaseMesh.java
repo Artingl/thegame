@@ -13,6 +13,7 @@ import dev.artingl.Engine.renderer.shader.ShaderType;
 import dev.artingl.Engine.renderer.viewport.Viewport;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.resources.texture.Texture;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -33,15 +34,6 @@ public class BaseMesh implements IMesh {
             new Shader(ShaderType.VERTEX, new Resource("engine", "shaders/mesh/instanced_base_mesh.vert")),
             new Shader(ShaderType.FRAGMENT, new Resource("engine", "shaders/mesh/base_mesh.frag"))
     );
-
-    static {
-        try {
-            BASE_PROGRAM.bake();
-            INSTANCED_BASE_PROGRAM.bake();
-        } catch (EngineException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private int verticesCount;
     private int indicesCount;
@@ -92,15 +84,13 @@ public class BaseMesh implements IMesh {
      * Set mesh's texture
      * */
     public void setTexture(Texture texture) {
-        if (texture == null)
-            this.currentTexture = Texture.MISSING;
-        else
-            this.currentTexture = texture;
+        this.currentTexture = texture;
     }
 
     /**
      * Get current mesh's texture
      * */
+    @Nullable
     public Texture getTexture() {
         return currentTexture;
     }
@@ -202,6 +192,11 @@ public class BaseMesh implements IMesh {
 
     @Override
     public void render(RenderContext context, int mode) {
+        if (!BASE_PROGRAM.isBaked() || !INSTANCED_BASE_PROGRAM.isBaked()) {
+            BASE_PROGRAM.bake();
+            INSTANCED_BASE_PROGRAM.bake();
+        }
+
         if (verticesCount > 0 && vao <= 0) {
             Engine.getInstance().getLogger().log(LogLevel.WARNING, "Trying to render an empty mesh! VAO=%d, VERT_CNT=%d, INSTANCE=%s", vao, verticesCount, this);
             this.makeDirty();
@@ -217,15 +212,16 @@ public class BaseMesh implements IMesh {
             return;
         this.fadeAnimationStep();
 
+
         // Use the shader program if we have one
         if (program != null) {
             program.setMainTexture(currentTexture);
             program.updateModelMatrix(getModelMatrix());
             program.setUniformVector4f("color", color.asVector4f());
             program.setUniformFloat("opacity", this.opacity * MathUtils.easeInOutCirc(meshFade));
-            program.use();
             Viewport viewport = context.getViewport();
             viewport.uploadMatrices(program);
+            program.use();
         }
 
         // Render the mesh
@@ -242,6 +238,11 @@ public class BaseMesh implements IMesh {
 
     @Override
     public void renderInstanced(RenderContext context, int mode) {
+        if (!BASE_PROGRAM.isBaked() || !INSTANCED_BASE_PROGRAM.isBaked()) {
+            BASE_PROGRAM.bake();
+            INSTANCED_BASE_PROGRAM.bake();
+        }
+
         if (verticesCount > 0 && vao <= 0) {
             Engine.getInstance().getLogger().log(LogLevel.WARNING, "Trying to render an empty mesh! VAO=%d, VERT_CNT=%d, INSTANCE=%s", vao, verticesCount, this);
             this.makeDirty();

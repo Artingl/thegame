@@ -6,26 +6,20 @@ import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.debug.Profiler;
-import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.renderer.mesh.MeshManager;
 import dev.artingl.Engine.renderer.pipeline.IPipeline;
 import dev.artingl.Engine.renderer.pipeline.PipelineManager;
-import dev.artingl.Engine.renderer.postprocessing.Postprocessing;
+import dev.artingl.Engine.renderer.postprocessing.PostprocessManager;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
-import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.renderer.viewport.Viewport;
-import dev.artingl.Engine.resources.Options;
-import dev.artingl.Engine.world.scene.components.CameraComponent;
-import dev.artingl.Engine.world.scene.nodes.CameraNode;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL20C;
 
-import static org.lwjgl.opengl.GL11.GL_CLAMP;
 import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL30C.*;
 import static org.lwjgl.opengl.GL31C.glDrawArraysInstanced;
 import static org.lwjgl.opengl.GL31C.glDrawElementsInstanced;
-import static org.lwjgl.opengl.GL32C.glFramebufferTexture;
 
 public class Renderer {
 
@@ -33,72 +27,38 @@ public class Renderer {
 
     private final PipelineManager pipeline;
     private final Viewport viewport;
-    private final Postprocessing postprocessing;
+    private final PostprocessManager postprocessManager;
     private final MeshManager meshManager;
     private final FontManager fontManager;
     private ShaderProgram programInUse;
     private int vaoInUse;
     private int eboInUse;
-    private int currentFramebuffer;
+    private Framebuffer currentFramebuffer;
     private boolean isWireframeEnabled;
+    private final Framebuffer framebuffer;
 
-    private int renderTexture, framebuffer, depthBuffer;
 
     public Renderer(Logger logger) {
         this.logger = logger;
         this.viewport = new Viewport(this.logger, this);
         this.pipeline = new PipelineManager(this.logger, this);
-        this.postprocessing = new Postprocessing(this.logger);
+        this.postprocessManager = new PostprocessManager(this.logger);
         this.meshManager = new MeshManager(this.logger, this);
         this.fontManager = new FontManager(this.logger, this);
         this.isWireframeEnabled = false;
-
-//        this.pipeline.append(this.postprocessing);
+        this.framebuffer = new Framebuffer();
+        this.pipeline.append(this.postprocessManager);
     }
 
     public void create() throws EngineException {
-        this.pipeline.init();
         this.fontManager.init();
-
-        Display display = Engine.getInstance().getDisplay();
-        int width = display.getWidth();
-        int height = display.getHeight();
-
-        // Initialize render texture and depth buffer
-        this.framebuffer = glGenFramebuffers();
-        this.renderTexture = glGenTextures();
-        this.depthBuffer = glGenBuffers();
-
-        glBindFramebuffer(GL_FRAMEBUFFER, this.framebuffer);
-
-        glBindTexture(GL_TEXTURE_2D, this.renderTexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-
-        glBindBuffer(GL_RENDERBUFFER, this.depthBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this.depthBuffer);
-
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, this.renderTexture, 0);
-        glDrawBuffers(new int[]{GL_COLOR_ATTACHMENT0});
-
-        // Check framebuffer
-        int status;
-        if ((status = glCheckFramebufferStatus(GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
-            throw new EngineException("Bad framebuffer status: " + status);
-
+        this.framebuffer.init();
         this.meshManager.init();
-        this.postprocessing.init();
+        this.pipeline.init();
     }
 
     public void terminate() {
-        glDeleteBuffers(this.depthBuffer);
-        glDeleteTextures(this.renderTexture);
-        glDeleteFramebuffers(this.framebuffer);
-        this.postprocessing.cleanup();
+        this.framebuffer.cleanup();
         this.fontManager.cleanup();
         this.pipeline.cleanup();
         this.meshManager.cleanup();
@@ -112,12 +72,16 @@ public class Renderer {
     public void pipelineAdd(IPipeline instance) {
         this.logger.log(LogLevel.INFO, "Appending new interface to the pipeline: %s", instance.toString());
         this.pipeline.append(instance);
+        this.pipeline.makeLast(this.postprocessManager);
     }
 
     /**
      * Make all calls necessary for the frame to be rendered (make pipeline calls, etc.)
      */
     public void frame() throws EngineException {
+        if (this.framebuffer.updateBuffer())
+            return;
+
         this.programInUse = null;
         this.vaoInUse = -1;
         this.eboInUse = -1;
@@ -128,14 +92,11 @@ public class Renderer {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         bindFramebuffer(framebuffer);
+        this.framebuffer.clear();
         this.viewport.update();
         this.viewport.clear();
         this.pipeline.call();
-        glUseProgram(0);
-        bindFramebuffer(0);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-//        this.postprocessing.render(pipeline.getRenderContext());
     }
 
     public Viewport getViewport() {
@@ -143,6 +104,12 @@ public class Renderer {
     }
 
     public void useShader(ShaderProgram program) {
+        if (program == null) {
+            GL20C.glUseProgram(0);
+            this.programInUse = null;
+            return;
+        }
+
         if (!program.equals(this.programInUse)) {
             GL20C.glUseProgram(program.getProgramId());
             this.programInUse = program;
@@ -153,27 +120,34 @@ public class Renderer {
         return fontManager;
     }
 
+    @Nullable
     public ShaderProgram getCurrentProgram() {
         return programInUse;
     }
 
-    public void bindFramebuffer(int id) {
-        if (this.currentFramebuffer == id)
+    public void bindFramebuffer(Framebuffer fb) {
+        if (fb == null) {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             return;
+        }
 
         Display display = Engine.getInstance().getDisplay();
-        this.currentFramebuffer = id;
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);//id);
+        this.currentFramebuffer = fb;
+        glBindFramebuffer(GL_FRAMEBUFFER, fb.getFramebuffer());
         glViewport(0, 0, display.getWidth(), display.getHeight());
-
         Engine.getInstance().getProfiler().incCounter(Profiler.Task.FRAMEBUFFER_BINDS);
     }
 
-    public int getCurrentFramebuffer() {
+    public Framebuffer getCurrentFramebuffer() {
         return currentFramebuffer;
     }
 
+    public Framebuffer getMainFramebuffer() {
+        return framebuffer;
+    }
+
     public void drawCall(DrawCall type, int array, int mode, int count) {
+        long start = System.nanoTime();
         if (array <= 0 || mode <= 0 || count <= 0)
             return;
 
@@ -199,9 +173,11 @@ public class Renderer {
 
         Engine.getInstance().getProfiler().incCounter(Profiler.Task.DRAW_CALLS);
         Engine.getInstance().getProfiler().addCounter(Profiler.Task.VERTICES_DRAWN, count);
+        Engine.getInstance().getProfiler().addGpuTime((System.nanoTime() - start) / 1000000f);
     }
 
     public void drawCallInstanced(DrawCall type, int array, int mode, int count, int n) {
+        long start = System.nanoTime();
         if (array <= 0 || mode <= 0 || count <= 0 || n <= 0)
             return;
 
@@ -227,18 +203,7 @@ public class Renderer {
 
         Engine.getInstance().getProfiler().incCounter(Profiler.Task.DRAW_CALLS);
         Engine.getInstance().getProfiler().addCounter(Profiler.Task.VERTICES_DRAWN, count);
-    }
-
-    public int getRenderTextureId() {
-        return renderTexture;
-    }
-
-    public int getDepthRenderBuffer() {
-        return depthBuffer;
-    }
-
-    public int getFramebufferId() {
-        return framebuffer;
+        Engine.getInstance().getProfiler().addGpuTime((System.nanoTime() - start) / 1000000f);
     }
 
     public boolean isPostprocessingEnabled() {
@@ -272,8 +237,8 @@ public class Renderer {
     /**
      * Get post-process controller
      */
-    public Postprocessing getPostprocessing() {
-        return this.postprocessing;
+    public PostprocessManager getPostprocessing() {
+        return this.postprocessManager;
     }
 
     public enum DrawCall {

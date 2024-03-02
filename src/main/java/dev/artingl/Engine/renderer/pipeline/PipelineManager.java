@@ -25,6 +25,10 @@ public class PipelineManager implements EngineEventListener {
 
     public void init() throws EngineException {
         Engine.getInstance().subscribeEngineEvents(this);
+        // Initialize all instances
+        for (PipelineInstance instance : pipelineList) {
+            instance.getInstance().pipelineInit(instance);
+        }
     }
 
     public void cleanup() {
@@ -48,18 +52,9 @@ public class PipelineManager implements EngineEventListener {
     public void call() throws EngineException {
         try {
             Renderer renderer = renderContext.getRenderer();
-            boolean isFramebufferBound = false;
 
             for (PipelineInstance instance : pipelineList) {
-                // Setup rendering based on flags
-                if ((instance.getInstance().pipelineFlags() & IPipeline.Flags.RENDER_DIRECTLY) != 0) {
-                    isFramebufferBound = false;
-                    renderer.bindFramebuffer(0);
-                } else if (!isFramebufferBound) {
-                    isFramebufferBound = true;
-                    renderer.bindFramebuffer(renderer.getFramebufferId());
-                }
-
+                renderer.bindFramebuffer(renderer.getMainFramebuffer());
                 instance.call(renderContext);
             }
         } catch (EngineException e) {
@@ -100,8 +95,9 @@ public class PipelineManager implements EngineEventListener {
         this.logger.log(LogLevel.INFO, "Reloading all pipeline instances");
 
         // Cleanup all pipeline instances (they'll initialize themselves on next render pass)
-        for (PipelineInstance instance : pipelineList) {
-            instance.cleanup();
-        }
+        // TODO: fix it...
+//        for (PipelineInstance instance : pipelineList) {
+//            instance.cleanup();
+//        }
     }
 }

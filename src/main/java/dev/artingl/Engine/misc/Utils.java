@@ -4,12 +4,14 @@ import dev.artingl.Engine.input.Input;
 import org.joml.*;
 import org.lwjgl.BufferUtils;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.Random;
 
 import static org.lwjgl.BufferUtils.createByteBuffer;
@@ -160,4 +162,32 @@ public class Utils {
         return new Vector4f(v.x, v.y, v.z, v.w);
     }
 
+    private static byte[] createChecksum(String filename) throws Exception {
+        InputStream fis =  new FileInputStream(filename);
+
+        byte[] buffer = new byte[1024];
+        MessageDigest complete = MessageDigest.getInstance("MD5");
+        int numRead;
+
+        do {
+            numRead = fis.read(buffer);
+            if (numRead > 0) {
+                complete.update(buffer, 0, numRead);
+            }
+        } while (numRead != -1);
+
+        fis.close();
+        return complete.digest();
+    }
+
+    public static String getMD5Checksum(String filename) throws Exception {
+        byte[] b = createChecksum(filename);
+        StringBuilder result = new StringBuilder();
+
+        for (byte value : b) {
+            result.append(Integer.toString((value & 0xff) + 0x100, 16).substring(1));
+        }
+
+        return result.toString();
+    }
 }

@@ -19,14 +19,6 @@ public class ChunkMesh extends BaseMesh {
             new Shader(ShaderType.FRAGMENT, new Resource("thegame", "shaders/world/chunk_mesh.frag"))
     );
 
-    static {
-        try {
-            CHUNK_PROGRAM.bake();
-        } catch (EngineException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private final Level level;
     private final Chunk chunk;
     private MeshQuality currentQuality;
@@ -57,6 +49,9 @@ public class ChunkMesh extends BaseMesh {
 
     @Override
     public void render(RenderContext context, int mode) {
+        if (!CHUNK_PROGRAM.isBaked())
+            CHUNK_PROGRAM.bake();
+
         if (this.isDirty() || !this.isBaked())
             return;
 

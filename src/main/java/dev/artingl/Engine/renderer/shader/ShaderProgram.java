@@ -4,6 +4,7 @@ import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
+import dev.artingl.Engine.renderer.Framebuffer;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.viewport.Viewport;
 import dev.artingl.Engine.resources.texture.Texture;
@@ -133,6 +134,10 @@ public class ShaderProgram implements TickListener {
         this.uniforms.add(new UniformProp(uniform, mat));
     }
 
+    public void setUniformObject(String uniform, Object o) {
+        this.uniforms.add(new UniformProp(uniform, o));
+    }
+
     public void setUniformFloat(String uniform, float f) {
         this.uniforms.add(new UniformProp(uniform, f));
     }
@@ -182,12 +187,15 @@ public class ShaderProgram implements TickListener {
         glBindTexture(GL_TEXTURE_2D, id);
     }
 
-    public void addTextureUniform(String uniform, int id) {
+    public void setTextureUniform(String uniform, int id) {
         this.textures.add(new TextureUniform(uniform, id));
     }
 
     public void setMainTexture(Texture texture) {
-        this.mainTexture = texture.getTextureId();
+        if (texture == null) {
+            this.mainTexture = 0;
+        }
+        else this.mainTexture = texture.getTextureId();
     }
 
     public int getProgramId() {
@@ -197,14 +205,15 @@ public class ShaderProgram implements TickListener {
     public void use() {
         Engine engine = Engine.getInstance();
         Renderer renderer = engine.getRenderer();
+        Framebuffer framebuffer = renderer.getMainFramebuffer();
         renderer.useShader(this);
 
         glUniform3f(getUniformLoc("screenResolution"), engine.getDisplay().getWidth(), engine.getDisplay().getHeight(), engine.getDisplay().getAspectRatio());
         glUniform1f(getUniformLoc("m_time"), time);
 
         // Setup and bind textures for the shader
-        this.activateTexture("texture0", 0, mainTexture);
-        this.activateTexture("framebufferTexture", 1, renderer.getRenderTextureId());
+        this.activateTexture("tex0", 0, mainTexture);
+        this.uniforms.add(new UniformProp("isTex0Set", mainTexture > 0));
         this.mainTexture = Texture.MISSING.getTextureId();
 
         // Set all uniforms
@@ -218,6 +227,7 @@ public class ShaderProgram implements TickListener {
             }
             else if (uniform.value instanceof Float v) glUniform1f(loc, v);
             else if (uniform.value instanceof Integer v) glUniform1i(loc, v);
+            else if (uniform.value instanceof Boolean v) glUniform1i(loc, v ? 1 : 0);
             else if (uniform.value instanceof Vector2f v) glUniform2f(loc, v.x, v.y);
             else if (uniform.value instanceof Vector3f v) glUniform3f(loc, v.x, v.y, v.z);
             else if (uniform.value instanceof Vector2i v) glUniform2i(loc, v.x, v.y);
@@ -227,10 +237,13 @@ public class ShaderProgram implements TickListener {
         }
         this.uniforms.clear();
 
-        int i = 2;
+        int i = 1;
         for (TextureUniform tex: this.textures) {
             this.activateTexture(tex.uniform, i++, tex.textureId);
         }
+        this.textures.clear();
+        this.textures.add(new TextureUniform("fbTex", framebuffer.getFrameTexture()));
+        this.textures.add(new TextureUniform("depthTex", framebuffer.getDepthTexture()));
     }
 
     @Override

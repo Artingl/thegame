@@ -5,6 +5,7 @@ import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.input.InputListener;
 import dev.artingl.Engine.input.Input;
 import dev.artingl.Engine.input.InputKeys;
+import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.world.scene.components.CameraComponent;
 import dev.artingl.Engine.world.scene.components.phys.CharacterControlComponent;
@@ -49,6 +50,7 @@ public class PlayerControllerNode extends CameraNode implements InputListener {
         CameraComponent camera = getCamera();
         camera.type = IViewport.Type.PERSPECTIVE;
         camera.farPlane = 400;
+        camera.postprocessing = true;
 
         /* Make sure the camera is main on the scene!!! */
         this.getScene().setMainCamera(this);
@@ -101,8 +103,9 @@ public class PlayerControllerNode extends CameraNode implements InputListener {
             if (input.getKeyboardState(InputKeys.KEY_D).isHeld()) { posDelta.x += speed; }
             this.oldPosDelta = this.oldPosDelta.add(new Vector3f(posDelta).sub(this.oldPosDelta).mul(0.1f));
 
-            /* Sneak */
-            this.isSneaking = input.getKeyboardState(InputKeys.KEY_LEFT_CONTROL).isHeld();
+            /* Sneak
+             * TODO: sneaking crashes the game for some reason.... */
+//            this.isSneaking = input.getKeyboardState(InputKeys.KEY_LEFT_CONTROL).isHeld();
 
             /* Sprint */
             if (input.getKeyboardState(InputKeys.KEY_LEFT_SHIFT).isHeld() && !this.isSneaking && posDelta.z < 0) {
@@ -165,6 +168,14 @@ public class PlayerControllerNode extends CameraNode implements InputListener {
         this.zoomSpeed = Math.max(0.5f, Math.min(50, this.zoomSpeed * 1.05f));
         this.zoomModifier = Math.min(Math.max(0, this.zoomModifier - zoomSpeed / timer.getTickPerSecond()), 70);
         this.controller.enableController = this.captureControl;
+
+//        cameraTransform.rotation.x = Utils.randInt(0, 360);
+//        cameraTransform.rotation.y = Utils.randInt(0, 360);
+//        cameraTransform.rotation.z = Utils.randInt(0, 360);
+//
+//        cameraTransform.position.x = Utils.randInt(-200, 200);
+//        cameraTransform.position.y = 10;
+//        cameraTransform.position.z = Utils.randInt(-200, 200);
     }
 
     public CameraComponent getCamera() {

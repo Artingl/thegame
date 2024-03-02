@@ -4,7 +4,7 @@
 
 layout (location = 0) out vec4 fragColor;
 
-uniform sampler2D texture0;
+uniform sampler2D tex0;
 uniform float lightLevel;
 uniform vec3 skyColor;
 uniform vec3 cameraPosition;

@@ -21,16 +21,7 @@ public class SkyMesh extends SphereMesh {
             new Shader(ShaderType.FRAGMENT, new Resource("thegame", "shaders/world/sky.frag"))
     );
 
-    static {
-        try {
-            SKY_PROGRAM.bake();
-        } catch (EngineException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private Color color;
-
 
     private final Level level;
     private final Sky sky;
@@ -64,6 +55,9 @@ public class SkyMesh extends SphereMesh {
 
     @Override
     public void render(RenderContext context, int mode) {
+        if (!SKY_PROGRAM.isBaked())
+            SKY_PROGRAM.bake();
+
         // Send all necessary info to the shader
         SKY_PROGRAM.updateModelMatrix(getModelMatrix());
         SKY_PROGRAM.setUniformFloat("currentRadius", getRadius());
