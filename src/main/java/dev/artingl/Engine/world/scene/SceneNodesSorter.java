@@ -13,7 +13,7 @@ public class SceneNodesSorter implements Comparator<SceneNode> {
 
     public SceneNodesSorter(CameraNode camera) {
         this.camera = camera;
-        this.cameraPos = camera.getTransform().position;
+        this.cameraPos = new Vector3f(camera.getTransform().position);
     }
 
     @Override

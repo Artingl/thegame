@@ -26,7 +26,7 @@ public class CharacterControlComponent extends Component {
 
     public CharacterControlComponent() {
         this.shape = new CapsuleCollisionShape(1, this.height);
-        this.controller = new CharacterControl(shape, 0.01f);
+        this.controller = new CharacterControl(shape, 0.001f);
         this.oldHeight = this.height;
     }
 

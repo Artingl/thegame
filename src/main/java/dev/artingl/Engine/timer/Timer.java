@@ -36,6 +36,7 @@ public class Timer {
     private int ticks;
     private float timeScale = 1.0F;
     private float passedTime = 0.0F;
+    private float time = 0.0F;
     private boolean isRunning;
     private boolean isTimerStopped = true;
     private final Collection<TickListener> subscribers;
@@ -60,6 +61,10 @@ public class Timer {
 
     public void unsubscribe(TickListener tick) {
         this.subscribers.remove(tick);
+    }
+
+    public float getTime() {
+        return time;
     }
 
     /**
@@ -99,6 +104,7 @@ public class Timer {
                     this.ticks = 100;
                 }
 
+                this.time += (1 / tickPerSecond) * ticks;
                 this.passedTime -= (float)this.ticks;
                 this.callSubscribers();
             }

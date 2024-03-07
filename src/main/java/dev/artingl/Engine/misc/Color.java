@@ -148,11 +148,12 @@ public class Color {
      *
      * @param color Target color
      */
-    public void add(Color color) {
+    public Color add(Color color) {
         r += color.r;
         g += color.g;
         b += color.b;
         a += color.a;
+        return this;
     }
 
     /**
@@ -160,11 +161,12 @@ public class Color {
      *
      * @param color Target color
      */
-    public void set(Color color) {
+    public Color set(Color color) {
         r = color.r;
         g = color.g;
         b = color.b;
         a = color.a;
+        return this;
     }
 
     /**
@@ -172,10 +174,11 @@ public class Color {
      *
      * @param divider Divider to be used
      */
-    public void div3(float divider) {
+    public Color div3(float divider) {
         r = (int) (r / divider);
         g = (int) (g / divider);
         b = (int) (b / divider);
+        return this;
     }
 
     /**
@@ -183,10 +186,36 @@ public class Color {
      *
      * @param divider Divider to be used
      */
-    public void div4(float divider) {
+    public Color div4(float divider) {
         r = (int) (r / divider);
         g = (int) (g / divider);
         b = (int) (b / divider);
         a = (int) (a / divider);
+        return this;
+    }
+
+    /**
+     * Multiply RGB values with a value
+     *
+     * @param v Value to be used
+     */
+    public Color mul3(float v) {
+        r = (int) (r * v);
+        g = (int) (g * v);
+        b = (int) (b * v);
+        return this;
+    }
+
+    /**
+     * Multiply RGBA values with a value
+     *
+     * @param v Value to be used
+     */
+    public Color mul4(float v) {
+        r = (int) (r * v);
+        g = (int) (g * v);
+        b = (int) (b * v);
+        a = (int) (a * v);
+        return this;
     }
 }

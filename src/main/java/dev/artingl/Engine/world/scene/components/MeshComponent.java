@@ -1,10 +1,9 @@
 package dev.artingl.Engine.world.scene.components;
 
 import dev.artingl.Engine.Engine;
-import dev.artingl.Engine.EngineException;
-import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.IMesh;
-import dev.artingl.Engine.renderer.mesh.MeshQuality;
+import dev.artingl.Engine.renderer.Quality;
 import dev.artingl.Engine.world.scene.BaseScene;
 import dev.artingl.Engine.world.scene.components.transform.TransformComponent;
 import dev.artingl.Engine.world.scene.nodes.CameraNode;
@@ -27,11 +26,9 @@ public class MeshComponent extends Component {
     }
 
     /**
-     * Determines how far the mesh must be from the camera for the quality level to change.
-     * Value in range from 1 to 10, where 1 is the default value and the quality would change at normal distance,
-     * and where 10 is the quality of the mesh would change being too far away from the mesh.
-     * </p>
-     * If the value is set to 0, the quality of the mesh would not be changed based on the distance (the default value).
+     * Determines how fast the mesh's quality would degrade based on its distance from the camera.
+     *
+     * @param qualityDistance Value in the range from 1 to 10
      * */
     public void setQualityDistance(int qualityDistance) {
         this.qualityDistance = Math.min(10, Math.max(1, qualityDistance));
@@ -44,29 +41,31 @@ public class MeshComponent extends Component {
         FrustumIntersection frustum = getEngine().getRenderer().getViewport().getFrustum();
         TransformComponent nodeTransform = getNode().getTransform();
         SceneNode node = getNode();
+        Engine engine = getEngine();
 
         if (node == null || this.qualityDistance == 0)
             return;
 
-        if (mesh != null && camera != null && node.getLayer().equals(BaseScene.Layers.MAIN)) {
+        if (mesh != null && camera != null && node.getLayer().equals(BaseScene.Layer.MAIN)) {
             float cameraDistance = camera.getTransform().position.distance(nodeTransform.position);
             if (qualityUpdateTicks++ % ((int)(timer.getTickPerSecond() / 2)) == 0) {
                 // Do that only if the mesh is not in the camera viewport and the level of quality is going to degrade,
                 // because it'd look bad if object would just disappear
                 if (cameraDistance < lastCameraDistance || !frustum.testPoint(nodeTransform.position)) {
-                    float renderDistance = Engine.getInstance().getOptions().getFloat(Options.Values.RENDER_DISTANCE);
+                    Quality highestSetting = (Quality) engine.getOptions().get(Options.Values.QUALITY_SETTING);
+                    float renderDistance = engine.getOptions().getFloat(Options.Values.RENDER_DISTANCE);
                     float qualityMod0 = (80 * this.qualityDistance) * renderDistance,
                             qualityMod1 = (160 * this.qualityDistance) * renderDistance,
                             qualityMod2 = (260 * this.qualityDistance) * renderDistance;
 
                     if (renderDistance == 0) {
-                        this.mesh.setQuality(cameraDistance < 50 ? MeshQuality.POTATO : MeshQuality.NOT_RENDERED);
+                        this.mesh.setQuality(cameraDistance < 50 ? Quality.clamp(highestSetting, Quality.POTATO) : Quality.clamp(highestSetting, Quality.NOT_RENDERED));
                     }
                     else {
                         this.mesh.setQuality(
-                                cameraDistance < (50 + qualityMod0) ? MeshQuality.HIGH :
-                                cameraDistance < (120 + qualityMod1) ? MeshQuality.MEDIUM :
-                                cameraDistance < (140 + qualityMod2) ? MeshQuality.LOW : MeshQuality.NOT_RENDERED);
+                                cameraDistance < (50 + qualityMod0) ? Quality.clamp(highestSetting, Quality.HIGH) :
+                                cameraDistance < (120 + qualityMod1) ? Quality.clamp(highestSetting, Quality.MEDIUM) :
+                                cameraDistance < (140 + qualityMod2) ? Quality.clamp(highestSetting, Quality.LOW) : Quality.clamp(highestSetting, Quality.NOT_RENDERED));
                         this.lastCameraDistance = cameraDistance;
                     }
                 }
@@ -84,7 +83,7 @@ public class MeshComponent extends Component {
     }
 
     @Override
-    public void render(SceneNode node, RenderContext context) {
+    public void render(SceneNode node, Renderer renderer) {
         if (mesh != null && enableRendering) {
             TransformComponent transform = node.getTransform();
 
@@ -92,7 +91,7 @@ public class MeshComponent extends Component {
                 mesh.bake();
 
             mesh.transform(transform.getMatrix());
-            mesh.render(context);
+            mesh.render(renderer);
         }
     }
 

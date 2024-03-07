@@ -112,8 +112,8 @@ void main() {
     starColor *= 1 - lightLevel;
 
     // Calculate color for the sun and moon
-    vec3 sunColor = renderPlanet(30, vec3(currentRadius, 0, 0), SUN_COLOR);
-    vec3 moonColor = renderPlanet(30, vec3(-currentRadius, 0, 0), MOON_COLOR);
+    vec3 sunColor = renderPlanet(currentRadius * 0.1f, vec3(currentRadius, 0, 0), SUN_COLOR);
+    vec3 moonColor = renderPlanet(currentRadius * 0.13f, vec3(-currentRadius, 0, 0), MOON_COLOR);
     if (sunColor.x != 0 || moonColor.x != 0) {
         starColor = vec3(0);
     }

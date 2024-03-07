@@ -134,7 +134,7 @@ public class TextureManager {
 
         // Cleanup all textures
         for (Texture texture: this.textures.values()) {
-            if (texture.getTextureId() == Texture.MISSING.getTextureId())
+            if (texture.getTextureId() == Texture.MISSING.getTextureId() || texture.getTextureId() == Texture.UV_TEST.getTextureId())
                 continue;
             glDeleteTextures(texture.getTextureId());
         }

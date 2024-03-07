@@ -9,7 +9,7 @@ import dev.artingl.Engine.world.scene.components.SoundComponent;
 import dev.artingl.Engine.world.scene.components.phys.RigidBodyComponent;
 import dev.artingl.Engine.world.scene.components.phys.collider.MeshColliderComponent;
 import dev.artingl.Engine.world.scene.nodes.sprites.SpriteNode;
-import dev.artingl.Game.scene.MapScene;
+import dev.artingl.Game.scene.DevScene;
 import dev.artingl.Game.scene.Models;
 
 public class ServerNode extends SpriteNode {
@@ -34,7 +34,7 @@ public class ServerNode extends SpriteNode {
         // Mute the server's sound if player is not inside the shelter
         BaseScene scene = getScene();
 
-        if (scene instanceof MapScene map) {
+        if (scene instanceof DevScene map) {
             ShelterNode shelter = map.getShelter();
 
             float volumeChangeSpeed = 3 / timer.getTickPerSecond();

@@ -78,7 +78,7 @@ public class Engine implements TickListener, InputListener {
         this.threadsManager = new ThreadsManager();
         this.options = new Options(this.logger);
         this.display = new Display(this.logger, this.input, "Engine - Untitled Window", 1400, 900);
-        this.renderer = new Renderer(this.logger);
+        this.renderer = new Renderer(this.logger, this);
         this.resourceManager = new ResourceManager(this, this.logger);
         this.sceneManager = new SceneManager();
         this.debugger = new Debugger();
@@ -217,6 +217,13 @@ public class Engine implements TickListener, InputListener {
         // Initialize OpenGL because after creating display we have GL context in this thread
         GL.createCapabilities();
 
+        glEnable(GL_DEBUG_OUTPUT);
+        glDebugMessageCallback((src, type, id, severity, len, msg, userParam) -> {
+            if (type == GL_DEBUG_TYPE_ERROR && severity == GL_DEBUG_SEVERITY_HIGH)
+                logger.log(LogLevel.INFO, "OPENGL DEBUG: " + GLDebugMessageCallback.getMessage(len, msg));
+        }, 0);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
         String glVersion = glGetString(GL_VERSION);
         logger.log(LogLevel.INFO, "OpenGL v%s", glVersion);
 
@@ -224,7 +231,7 @@ public class Engine implements TickListener, InputListener {
         this.renderer.create();
 
         // Initialize initial pipeline
-        this.renderer.pipelineAdd(this.sceneManager);
+        this.sceneManager.init();
 
         this.timer.subscribe(this);
         this.input.subscribe(this);
@@ -248,17 +255,11 @@ public class Engine implements TickListener, InputListener {
 //        glCullFace(GL_BACK);
         glFrontFace(GL_CW);
 
-        glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback((src, type, id, severity, len, msg, userParam) -> {
-            if (type == GL_DEBUG_TYPE_ERROR && severity == GL_DEBUG_SEVERITY_HIGH)
-                logger.log(LogLevel.INFO, "OPENGL DEBUG: " + GLDebugMessageCallback.getMessage(len, msg));
-        }, 0);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-
         this.timer.enterLoop();
     }
 
     public void terminate() {
+        this.sceneManager.cleanup();
         this.debugger.cleanup();
         this.engineEvents.clear();
         this.resourceManager.cleanup();

@@ -2,7 +2,7 @@ package dev.artingl.Engine.world.scene.components;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
-import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.world.scene.nodes.SceneNode;
 import dev.artingl.Engine.timer.TickListener;
 import dev.artingl.Engine.timer.Timer;
@@ -15,7 +15,7 @@ public class Component implements TickListener {
         return node;
     }
 
-    public void render(SceneNode node, RenderContext context) {}
+    public void render(SceneNode node, Renderer renderer) {}
 
     public String getName() {
         return getClass().getSimpleName();

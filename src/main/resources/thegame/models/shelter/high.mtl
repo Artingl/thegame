@@ -1,7 +1,7 @@
-# Blender 4.0.2 MTL File: 'spawn_shelter.blend'
+# Blender 4.0.2 MTL File: 'base.blend'
 # www.blender.org
 
-newmtl Material.004
+newmtl Material.002
 Ns 250.000000
 Ka 1.000000 1.000000 1.000000
 Ks 0.500000 0.500000 0.500000
@@ -9,4 +9,44 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd C:/stuff/workspace/local/thegame/src/main/resources/thegame/textures/models/shelter/floor.png
+map_Kd Z:/shared_folder/artingl/stuff/workspace/local/thegame/src/main/resources/thegame/textures/models/shelter/ceiling.png
+
+newmtl Material.005
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Z:/shared_folder/artingl/stuff/workspace/local/thegame/src/main/resources/thegame/textures/models/shelter/wall.png
+
+newmtl Material.006
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Z:/shared_folder/artingl/stuff/workspace/local/thegame/src/main/resources/thegame/textures/models/shelter/wall.png
+
+newmtl Material.007
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Z:/shared_folder/artingl/stuff/workspace/local/thegame/src/main/resources/thegame/textures/models/shelter/wall_outside.png
+
+newmtl Material.008
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Z:/shared_folder/artingl/stuff/workspace/local/thegame/src/main/resources/thegame/textures/models/shelter/wall.png

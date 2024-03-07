@@ -1,11 +1,10 @@
 package dev.artingl.Game.level;
 
-import com.jme3.scene.Mesh;
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.misc.noise.PerlinNoise;
-import dev.artingl.Engine.renderer.mesh.MeshQuality;
+import dev.artingl.Engine.renderer.Quality;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Game.level.chunk.Chunk;
 import dev.artingl.Game.level.chunk.environment.EnvironmentObjects;
@@ -22,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LevelTerrainGenerator {
 
-    public static final float STEP = 3;
     public static final float SPAWN_RADIUS = 100;
     public static final float RIVER_SIZE = 2;
 
@@ -51,11 +49,11 @@ public class LevelTerrainGenerator {
         // Generate the highest quality first, and all others using other threads to speed up the loading
         Engine engine = Engine.getInstance();
         chunk.getMesh().setVerticesQuality(
-                MeshQuality.HIGH,
-                generateQualityBuffer(MeshQuality.HIGH, chunk));
+                Quality.HIGH,
+                generateQualityBuffer(Quality.HIGH, chunk));
 
-        for (MeshQuality quality: MeshQuality.values()) {
-            if (quality == MeshQuality.NOT_RENDERED || quality == MeshQuality.HIGH)
+        for (Quality quality: Quality.values()) {
+            if (quality == Quality.NOT_RENDERED || quality == Quality.HIGH)
                 continue;
             engine.getThreadsManager().execute(() -> {
                 chunk.getMesh().setVerticesQuality(
@@ -65,10 +63,10 @@ public class LevelTerrainGenerator {
         }
     }
 
-    private VerticesBuffer generateQualityBuffer(MeshQuality quality, Chunk chunk) {
+    private VerticesBuffer generateQualityBuffer(Quality quality, Chunk chunk) {
         Vector2i chunkPosition = chunk.getPositionLevel();
-        int idx = (quality == MeshQuality.POTATO ? MeshQuality.LOW : quality).ordinal();
-        float step = STEP * ((idx + 1) * 2);
+        int idx = (quality == Quality.POTATO ? Quality.LOW : quality).ordinal();
+        float step = 3;
 
         VerticesBuffer buffer = new VerticesBuffer(
                 // Position
@@ -194,27 +192,29 @@ public class LevelTerrainGenerator {
         int divider = 0;
         int radius = 6, step = 1;
 
-        for (int xOffset = -radius; xOffset <= radius; xOffset += step)
-            for (int zOffset = -radius; zOffset <= radius; zOffset += step) {
-                float newX = x + xOffset, newZ = z + zOffset;
-                Terrain terrain = Terrain.as(getTerrainTypeAt(newX, newZ));
-                Terrain.TerrainMeta meta = terrain.generateTerrain(this, newX, newZ);
-                height += meta.getHeight();
-                color.add(meta.getColor());
-                divider++;
-                if (!terrain.environmentOverlap())
-                    objsCounter = -1;
-                if (meta.getEnvObject() != null && objsCounter != -1) {
-                    envObj = meta.getEnvObject();
-                    objsCounter++;
-                }
-            }
-        color.div3(divider);
-        height /= divider;
-        Terrain.TerrainMeta result = new Terrain.TerrainMeta(color, envObj, height);
+//        for (int xOffset = -radius; xOffset <= radius; xOffset += step)
+//            for (int zOffset = -radius; zOffset <= radius; zOffset += step) {
+//                float newX = x + xOffset, newZ = z + zOffset;
+//                Terrain terrain = Terrain.as(getTerrainTypeAt(newX, newZ));
+//                Terrain.TerrainMeta meta = terrain.generateTerrain(this, newX, newZ);
+//                height += meta.getHeight();
+//                color.add(meta.getColor());
+//                divider++;
+//                if (!terrain.environmentOverlap())
+//                    objsCounter = -1;
+//                if (meta.getEnvObject() != null && objsCounter != -1) {
+//                    envObj = meta.getEnvObject();
+//                    objsCounter++;
+//                }
+//            }
+//        color.div3(divider);
+//        height /= divider;
+//        Terrain.TerrainMeta result = new Terrain.TerrainMeta(color, envObj, height);
+//
+//        if (objsCounter > 0)//> radius*2)
+//            chunk.getEnvObjectsList().add(new Pair<>(envObj, new Vector3f(x, height - 0.1f, z)));
 
-        if (objsCounter > 0)//> radius*2)
-            chunk.getEnvObjectsList().add(new Pair<>(envObj, new Vector3f(x, height - 0.1f, z)));
+        Terrain.TerrainMeta result = new Terrain.TerrainMeta(Color.from(125, 199, 79), null, -2);
 
         // Cache value to be used later
         this.cachedTerrain.put(new Vector2i((int) x, (int) z), result);

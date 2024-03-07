@@ -1,14 +1,16 @@
 package dev.artingl.Game.scene.node.ambient;
 
 import dev.artingl.Engine.Engine;
-import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.resources.Options;
-import dev.artingl.Engine.world.scene.components.FurryRendererComponent;
+import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.world.scene.components.MeshComponent;
 import dev.artingl.Engine.world.scene.components.phys.RigidBodyComponent;
-import dev.artingl.Engine.world.scene.components.phys.collider.MeshColliderComponent;
+import dev.artingl.Engine.world.scene.components.phys.collider.HeightfieldColliderComponent;
 import dev.artingl.Engine.world.scene.nodes.SceneNode;
-import dev.artingl.Engine.renderer.viewport.IViewport;
+import dev.artingl.Engine.renderer.viewport.Viewport;
+import dev.artingl.Game.GameDirector;
+import dev.artingl.Game.level.LevelTerrainGenerator;
 import dev.artingl.Game.level.chunk.Chunk;
 import org.joml.FrustumIntersection;
 import org.joml.Vector2i;
@@ -22,8 +24,13 @@ public class ChunkNode extends SceneNode {
         this.chunk = chunk;
 
         MeshComponent mesh = new MeshComponent(chunk.getMesh());
-        MeshColliderComponent collider = new MeshColliderComponent(chunk.getMesh());
-        RigidBodyComponent rb = new RigidBodyComponent();
+        HeightfieldColliderComponent collider = new HeightfieldColliderComponent(Chunk.CHUNK_SIZE, Chunk.CHUNK_SIZE, (x, z) -> {
+            LevelTerrainGenerator generator = GameDirector.getInstance().getLevelsRegistry().getLevel(new Resource("thegame", "level/map")).getGenerator();
+
+            return generator.generateTerrain(chunk, x, z).getHeight();
+        });
+        RigidBodyComponent rb = new RigidBodyComponent(0);
+        rb.setOutOfRangeCheck(false);
 //        FurryRendererComponent fur = new FurryRendererComponent(FurryRendererComponent.Type.PLANE, 256, 1024, 0.005f);
 
         mesh.setQualityDistance(2);
@@ -42,10 +49,10 @@ public class ChunkNode extends SceneNode {
     }
 
     @Override
-    public void render(RenderContext context) {
+    public void render(Renderer renderer) {
         // Check if the chunk is visible by the camera or not inside render distance
-        FrustumIntersection frustum = context.getViewport().getFrustum();
-        IViewport viewport = context.getViewport().getCurrentViewport();
+        FrustumIntersection frustum = renderer.getViewport().getFrustum();
+        Viewport viewport = renderer.getViewport().getCurrentViewport();
         if (viewport == null) {
             // We don't have any camera
             this.abortRender();
@@ -70,6 +77,6 @@ public class ChunkNode extends SceneNode {
             return;
         }
 
-        super.render(context);
+        super.render(renderer);
     }
 }

@@ -4,14 +4,13 @@ import com.mokiat.data.front.parser.*;
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
-import dev.artingl.Engine.renderer.mesh.MeshQuality;
+import dev.artingl.Engine.renderer.Quality;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.resources.texture.Texture;
 import dev.artingl.Engine.resources.texture.TextureManager;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import java.io.IOException;
 import java.util.Map;
@@ -50,7 +49,7 @@ public class OBJModel implements IModel {
     }
 
     @Override
-    public VerticesBuffer load(MeshQuality quality, String meshName) {
+    public VerticesBuffer load(Quality quality, String meshName) {
         Logger logger = Engine.getInstance().getLogger();
         VerticesBuffer[] buffers;
 
@@ -67,7 +66,7 @@ public class OBJModel implements IModel {
         }
 
         synchronized (meshes) {
-            if (quality == MeshQuality.NOT_RENDERED)
+            if (quality == Quality.NOT_RENDERED)
                 return VerticesBuffer.EMPTY;
 
             int bufferId = quality.ordinal();
@@ -199,7 +198,7 @@ public class OBJModel implements IModel {
 
         // Initialize meshes map with all possible names
         for (String name: this.meshNames) {
-            this.meshes.put(name, new VerticesBuffer[MeshQuality.values().length-1]);
+            this.meshes.put(name, new VerticesBuffer[Quality.values().length-1]);
         }
     }
 

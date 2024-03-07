@@ -1,15 +1,13 @@
 package dev.artingl.Game.level.ambient;
 
-import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.misc.Color;
-import dev.artingl.Engine.renderer.RenderContext;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.SphereMesh;
 import dev.artingl.Engine.renderer.shader.Shader;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import dev.artingl.Engine.renderer.shader.ShaderType;
-import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.renderer.viewport.Viewport;
+import dev.artingl.Engine.renderer.viewport.ViewportManager;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.resources.texture.Texture;
 import dev.artingl.Game.level.Level;
@@ -54,7 +52,7 @@ public class SkyMesh extends SphereMesh {
     }
 
     @Override
-    public void render(RenderContext context, int mode) {
+    public void render(Renderer renderer, int mode) {
         if (!SKY_PROGRAM.isBaked())
             SKY_PROGRAM.bake();
 
@@ -65,21 +63,21 @@ public class SkyMesh extends SphereMesh {
         SKY_PROGRAM.setUniformVector3f("skyColor", color.asVector3f());
         SKY_PROGRAM.use();
 
-        Viewport viewport = context.getViewport();
-        IViewport iViewport = viewport.getCurrentViewport();
+        ViewportManager viewport = renderer.getViewport();
+        Viewport iViewport = viewport.getCurrentViewport();
         viewport.uploadMatrices(SKY_PROGRAM);
 
         // Update the sky mesh if render distance has changed
         if (iViewport != null) {
-            int rd = (int) (iViewport.getFarPlane() * 0.8f);
+            int rd = (int) Math.min(400, iViewport.getFarPlane() * 0.8f);
             if (this.lastRadius != rd) {
                 this.lastRadius = rd;
-                this.setVertices(this.generateSphereVertices(this.lastRadius, 6, 9));
+                this.setVertices(this.generateSphereVertices(this.lastRadius, 12, 18));
                 return;
             }
         }
 
         // Render the mesh
-        context.getRenderer().drawCall(Renderer.DrawCall.ARRAYS, getVao(), mode, getVerticesCount());
+        renderer.drawCall(Renderer.DrawCall.ARRAYS, getVao(), mode, getVerticesCount());
     }
 }

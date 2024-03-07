@@ -1,6 +1,6 @@
 package dev.artingl.Engine.renderer.models;
 
-import dev.artingl.Engine.renderer.mesh.MeshQuality;
+import dev.artingl.Engine.renderer.Quality;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.resources.texture.Texture;
@@ -13,7 +13,7 @@ public interface IModel {
      * @param quality  Quality of the model.
      * @param meshName The model to load
      */
-    VerticesBuffer load(MeshQuality quality, String meshName);
+    VerticesBuffer load(Quality quality, String meshName);
 
     /**
      * Set render mode to be used by default

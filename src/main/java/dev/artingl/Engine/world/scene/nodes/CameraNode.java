@@ -4,20 +4,22 @@ import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.MathUtils;
 import dev.artingl.Engine.world.scene.components.CameraComponent;
-import dev.artingl.Engine.renderer.viewport.IViewport;
+import dev.artingl.Engine.renderer.viewport.Viewport;
 import dev.artingl.Engine.timer.Timer;
 import org.joml.Vector3f;
 
-public class CameraNode extends SceneNode implements IViewport {
+public class CameraNode extends SceneNode implements Viewport {
+    private final CameraComponent camera;
 
     private float fovDelta = 0;
     private float previousFov = -1;
     private float targetFov = -1;
     private Vector3f projectionRotation;
-    private CameraComponent camera;
+    private Vector3f projectionOffset;
 
     public CameraNode() {
         this.projectionRotation = new Vector3f();
+        this.projectionOffset = new Vector3f();
         this.camera = new CameraComponent();
         this.addComponent(camera);
     }
@@ -31,6 +33,13 @@ public class CameraNode extends SceneNode implements IViewport {
      * */
     public void setProjectionRotation(Vector3f vec) {
         this.projectionRotation = new Vector3f(vec);
+    }
+
+    /**
+     * Set the offset of the viewport's projection matrix
+     * */
+    public void setProjectionOffset(Vector3f vec) {
+        this.projectionOffset = new Vector3f(vec);
     }
 
     /**
@@ -86,6 +95,11 @@ public class CameraNode extends SceneNode implements IViewport {
         return projectionRotation;
     }
 
+    @Override
+    public Vector3f getProjectionOffset() {
+        return projectionOffset;
+    }
+
     public float getFov() {
         return ((CameraComponent) getComponent(CameraComponent.class)).fov;
     }
@@ -121,8 +135,13 @@ public class CameraNode extends SceneNode implements IViewport {
     }
 
     @Override
-    public IViewport.Type getType() {
-        return ((CameraComponent) getComponent(CameraComponent.class)).type;
+    public ViewType getViewType() {
+        return ((CameraComponent) getComponent(CameraComponent.class)).viewType;
+    }
+
+    @Override
+    public RenderType getRenderType() {
+        return ((CameraComponent) getComponent(CameraComponent.class)).renderType;
     }
 
     @Override
@@ -131,8 +150,13 @@ public class CameraNode extends SceneNode implements IViewport {
     }
 
     @Override
-    public boolean usePostprocessing() {
-        return ((CameraComponent) getComponent(CameraComponent.class)).postprocessing;
+    public boolean isShadowMappingEnabled() {
+        return ((CameraComponent) getComponent(CameraComponent.class)).enableShadowMapping;
+    }
+
+    @Override
+    public boolean isPostprocessingEnabled() {
+        return ((CameraComponent) getComponent(CameraComponent.class)).enablePostprocessing;
     }
 
 }

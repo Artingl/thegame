@@ -1,9 +1,7 @@
 package dev.artingl.Engine.world.scene.components.phys.collider;
 
-import com.jme3.bullet.collision.PhysicsCollisionObject;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.collision.shapes.MeshCollisionShape;
-import com.jme3.scene.Spatial;
 import com.jme3.scene.VertexBuffer;
 import dev.artingl.Engine.renderer.mesh.IMesh;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
@@ -74,10 +72,6 @@ public class MeshColliderComponent extends BaseColliderComponent {
     @Override
     public String getName() {
         return "Mesh Collider";
-    }
-
-    public interface ITerrainHeightHandler {
-        float run(float x, float z);
     }
 
 }

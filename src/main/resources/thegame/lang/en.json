@@ -1,5 +1,14 @@
 {
-    "object.dingus": "Dingus",
-    "object.laptop": "Laptop",
-    "tooltip.pick_up": "Pick-up"
+    "object.name.dingus": "Dingus",
+    "object.name.ball": "Ball",
+    "object.name.laptop": "Laptop",
+    "object.name.stairs": "Stairs",
+
+    "object.pick_up.dingus": "Pick-up Dingus",
+    "object.pick_up.ball": "Pick-up Ball",
+    "object.pick_up.laptop": "Laptop",
+
+    "object.use.stairs": "Press <KEY_USE> to use stairs",
+    "object.drag.table": "Drag table",
+    "object.open.door": "Press <KEY_USE> to open the door"
 }

@@ -6,7 +6,7 @@ import dev.artingl.Engine.world.scene.nodes.SceneNode;
 public class UIPanelNode extends SceneNode {
 
     public UIPanelNode() {
-        super(BaseScene.Layers.UI);
+        super(BaseScene.Layer.UI);
     }
 
 }

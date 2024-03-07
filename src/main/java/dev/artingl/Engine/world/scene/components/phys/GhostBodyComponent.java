@@ -48,7 +48,7 @@ public class GhostBodyComponent extends Component implements BodyComponent {
 
         this.body.setPhysicsSpace(space);
         this.body.setCollisionShape(collider.getShape());
-        this.body.setPhysicsLocation(Utils.joml2jme(transform.position));
+        this.body.setPhysicsLocation(Utils.joml2jme(transform.getWorldPosition()));
         this.body.setPhysicsRotation(new Quaternion().fromAngles(transform.rotation.x, transform.rotation.y, transform.rotation.z));
     }
 

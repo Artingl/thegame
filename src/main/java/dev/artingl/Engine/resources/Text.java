@@ -4,6 +4,7 @@ import dev.artingl.Engine.Engine;
 
 public class Text {
 
+    public static final Text EMPTY = new Text("");
     private final String text;
 
 
@@ -45,6 +46,8 @@ public class Text {
      * @param text The text to concatenate with
      * */
     public Text concatenate(Text text) {
+        if (text == null)
+            return this;
         return new Text(this.text.trim() + " " + text.text.trim());
     }
 

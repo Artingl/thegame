@@ -2,15 +2,16 @@ package dev.artingl.Game;
 
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.Engine;
-import dev.artingl.Engine.renderer.postprocessing.effects.PostprocessBloomEffect;
+import dev.artingl.Engine.renderer.visual.postprocessing.effects.PostprocessSSAOEffect;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.world.scene.SceneManager;
 import dev.artingl.Game.common.vm.Sedna;
 import dev.artingl.Game.registries.LevelsRegistry;
-import dev.artingl.Game.render.postprocess.PostprocessPaletteEffect;
+import dev.artingl.Game.render.postprocess.PostprocessingEffect;
 import dev.artingl.Game.scene.FurryScene;
-import dev.artingl.Game.scene.MapScene;
+import dev.artingl.Game.scene.DevScene;
 import dev.artingl.Game.level.Level;
+import dev.artingl.Game.scene.GameScene;
 import dev.artingl.Game.scene.MainMenuScene;
 
 public class GameDirector {
@@ -51,8 +52,8 @@ public class GameDirector {
              */
             this.engine.create();
 
-            /* Load out main font */
-            this.engine.getRenderer().getFontManager().loadFont(new Resource("thegame", "font/main.ttf"));
+            /* Load main font */
+            this.engine.getRenderer().getFontManager().addFont(new Resource("thegame", "font/main.ttf"));
         } catch (Exception e) {
             /* We got critical error.
              * Print it out the error and exit with code 1
@@ -64,18 +65,22 @@ public class GameDirector {
         this.engine.getDisplay().setVsync(false);
 
         /* Add post-processing effects */
-        this.engine.getRenderer().getPostprocessing().addEffect(new PostprocessBloomEffect());
-        this.engine.getRenderer().getPostprocessing().addEffect(new PostprocessPaletteEffect());
+        this.engine.getRenderer().getPostprocessing().addEffect(new PostprocessSSAOEffect());
+//        this.engine.getRenderer().getPostprocessing().addEffect(new PostprocessBloomEffect());
+        this.engine.getRenderer().getPostprocessing().addEffect(new PostprocessingEffect());
 
         /* Register levels */
-        this.levelsRegistry.registerLevel(new Resource("thegame", "level/park"), new Level());
-        this.levelsRegistry.switchLevel(new Resource("thegame", "level/park"));
+        this.levelsRegistry.registerLevel(new Resource("thegame", "level/map"), new Level());
+        this.levelsRegistry.switchLevel(new Resource("thegame", "level/map"));
 
         /* Register scenes */
         SceneManager sceneManager = engine.getSceneManager();
 
-        sceneManager.registerScene(new Resource("thegame", "scene/map"), new MapScene());
-        sceneManager.switchScene(new Resource("thegame", "scene/map"));
+        sceneManager.registerScene(new Resource("thegame", "scene/dev"), new DevScene());
+//        sceneManager.switchScene(new Resource("thegame", "scene/dev"));
+
+        sceneManager.registerScene(new Resource("thegame", "scene/game"), new GameScene());
+        sceneManager.switchScene(new Resource("thegame", "scene/game"));
 
         sceneManager.registerScene(new Resource("thegame", "scene/furry"), new FurryScene());
 //        sceneManager.switchScene(new Resource("thegame", "scene/furry"));

@@ -11,16 +11,64 @@ public class TransformComponent extends Component {
     public Vector3f position;
     public Vector3f rotation;
     public Vector3f scale;
+    public Vector3f pivot;
 
     public TransformComponent() {
         this.position = new Vector3f();
         this.rotation = new Vector3f();
         this.scale = new Vector3f(1, 1, 1);
+        this.pivot = new Vector3f();
     }
 
     @Override
     public String getName() {
         return "Transform";
+    }
+
+    public void setLocalPosition(Vector3f position) {
+        SceneNode node = getNode();
+        if (node != null)
+            if (node.isChild()) {
+                this.position = new Vector3f(position).sub(node.getParent().getTransform().position);
+                return;
+            }
+        this.position = new Vector3f(position);
+    }
+
+    public void setLocalRotation(Vector3f rotation) {
+        this.rotation = rotation;
+    }
+
+    public void setLocalScale(Vector3f scale) {
+        SceneNode node = getNode();
+        if (node != null)
+            if (node.isChild()) {
+                this.scale = new Vector3f(scale).sub(node.getParent().getTransform().scale);
+                return;
+            }
+        this.scale = new Vector3f(scale);
+    }
+
+    public Vector3f getWorldPosition() {
+        SceneNode node = getNode();
+        if (node != null)
+            if (node.isChild()) {
+                return new Vector3f(node.getParent().getTransform().position).add(position);
+            }
+        return new Vector3f(position);
+    }
+
+    public Vector3f getWorldRotation() {
+        return rotation;
+    }
+
+    public Vector3f getWorldScale() {
+        SceneNode node = getNode();
+        if (node != null)
+            if (node.isChild()) {
+                return new Vector3f(node.getParent().getTransform().scale).add(scale);
+            }
+        return new Vector3f(scale);
     }
 
     public Matrix4f getMatrix() {
@@ -36,22 +84,26 @@ public class TransformComponent extends Component {
                 Vector3f relativeScale = new Vector3f(parentTransform.scale);
 
                 return new Matrix4f()
-                        .scale(relativeScale.mul(scale))
-                        .translate(relativePosition.add(position))
+                        .scale(relativeScale.mul(this.scale))
+                        .rotateXYZ(0, 0, 0)
+                        .translate(new Vector3f(this.position).add(relativePosition).add(this.pivot))
                         .rotateXYZ(
-                                (float) Math.toRadians(rotation.x),
-                                (float) Math.toRadians(rotation.y),
-                                (float) Math.toRadians(rotation.z));
+                                (float) Math.toRadians(this.rotation.x),
+                                (float) Math.toRadians(this.rotation.y),
+                                (float) Math.toRadians(this.rotation.z))
+                        .translate(new Vector3f(this.pivot).mul(-1));
             }
         }
 
         return new Matrix4f()
                 .scale(scale)
-                .translate(position)
+                .rotateXYZ(0, 0, 0)
+                .translate(new Vector3f(this.position).add(this.pivot))
                 .rotateXYZ(
-                        (float) Math.toRadians(rotation.x),
-                        (float) Math.toRadians(rotation.y),
-                        (float) Math.toRadians(rotation.z));
+                        (float) Math.toRadians(this.rotation.x),
+                        (float) Math.toRadians(this.rotation.y),
+                        (float) Math.toRadians(this.rotation.z))
+                .translate(new Vector3f(this.pivot).mul(-1));
     }
 
     public void copy(TransformComponent transform) {

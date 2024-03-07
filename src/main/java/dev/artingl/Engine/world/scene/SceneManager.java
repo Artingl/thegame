@@ -4,9 +4,6 @@ import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.input.Input;
-import dev.artingl.Engine.renderer.RenderContext;
-import dev.artingl.Engine.renderer.pipeline.IPipeline;
-import dev.artingl.Engine.renderer.pipeline.PipelineInstance;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.timer.Timer;
 import org.jetbrains.annotations.Nullable;
@@ -15,9 +12,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SceneManager implements IPipeline {
+public class SceneManager {
     private final Map<Resource, BaseScene> scenes;
-
     private BaseScene currentScene;
     private Resource currentSceneName;
 
@@ -84,13 +80,11 @@ public class SceneManager implements IPipeline {
      * Switch between scenes
      *
      * @param key The target scene's name
-     *
-     * @return True if scene was found and successfully switched to, otherwise false
-     * */
-    public boolean switchScene(Resource key) {
+     */
+    public void switchScene(Resource key) {
         BaseScene scene = getScene(key);
         if (scene == null)
-            return false;
+            return;
 
         Engine engine = Engine.getInstance();
         Timer timer = engine.getTimer();
@@ -115,8 +109,6 @@ public class SceneManager implements IPipeline {
         // Subscribe the scene for events
         timer.subscribe(scene);
         input.subscribe(scene);
-
-        return true;
     }
 
     @Override
@@ -124,19 +116,10 @@ public class SceneManager implements IPipeline {
         return "ScenesManager{currentScene=" + currentScene + "}";
     }
 
-    @Override
-    public void pipelineCleanup(PipelineInstance instance) {
+    public void cleanup() {
     }
 
-    @Override
-    public void pipelineInit(PipelineInstance instance) throws EngineException {
-    }
-
-    @Override
-    public void pipelineRender(RenderContext renderContext, PipelineInstance instance) throws EngineException {
-        if (currentScene != null) {
-            currentScene.prepareRender(renderContext);
-        }
+    public void init() throws EngineException {
     }
 
 }

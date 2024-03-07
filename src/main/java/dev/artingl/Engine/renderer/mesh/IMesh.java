@@ -1,8 +1,8 @@
 package dev.artingl.Engine.renderer.mesh;
 
-import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Quality;
+import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 
@@ -12,39 +12,39 @@ public interface IMesh {
      * Render the mesh
      * Note: default mode is GL_TRIANGLES
      *
-     * @param context Render context
-     * */
-    void render(RenderContext context);
+     * @param renderer Render context
+     */
+    void render(Renderer renderer);
 
     /**
      * Render the mesh with a mode
      *
-     * @param context Render context
-     * @param mode    Render mode (GL_TRIANGLES, GL_LINES, etc.)
+     * @param renderer Render context
+     * @param mode     Render mode (GL_TRIANGLES, GL_LINES, etc.)
      */
-    void render(RenderContext context, int mode);
+    void render(Renderer renderer, int mode);
 
     /**
      * Do instance rendering with the mesh
      * Note: default mode is GL_TRIANGLES;
      *
-     * @param context Render context
-     * */
-    void renderInstanced(RenderContext context);
+     * @param renderer Render context
+     */
+    void renderInstanced(Renderer renderer);
 
     /**
      * Do instance rendering with the mesh
      *
-     * @param context Render context
-     * @param mode    Render mode (GL_TRIANGLES, GL_LINES, etc.)
+     * @param renderer Render context
+     * @param mode     Render mode (GL_TRIANGLES, GL_LINES, etc.)
      */
-    void renderInstanced(RenderContext context, int mode);
+    void renderInstanced(Renderer renderer, int mode);
 
     /**
      * Change mesh quality (amount of vertices drawn).
      * Note: this will make the mesh dirty if the quality is different from current.
      * */
-    void setQuality(MeshQuality quality);
+    void setQuality(Quality quality);
 
     /**
      * Release resources occupied by the mesh
@@ -59,7 +59,7 @@ public interface IMesh {
     /**
      * Get current mesh quality
      * */
-    MeshQuality getQuality();
+    Quality getQuality();
 
     /**
      * Get the model matrix of the mesh
@@ -111,7 +111,7 @@ public interface IMesh {
      * Add instance to be rendered (for instanced rendering).
      * Note: this will make the mesh dirty.
      *
-     * @param buffer Buffer with values of the instance.
+     * @param buffer Buffer with the values of the instance.
      * */
     void addInstance(VerticesBuffer buffer);
 

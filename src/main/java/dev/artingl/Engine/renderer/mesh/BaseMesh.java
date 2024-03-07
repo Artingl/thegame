@@ -1,16 +1,15 @@
 package dev.artingl.Engine.renderer.mesh;
 
 import dev.artingl.Engine.Engine;
-import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.misc.MathUtils;
-import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Quality;
 import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.shader.Shader;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import dev.artingl.Engine.renderer.shader.ShaderType;
-import dev.artingl.Engine.renderer.viewport.Viewport;
+import dev.artingl.Engine.renderer.viewport.ViewportManager;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.resources.texture.Texture;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,6 @@ import java.util.List;
 import static org.lwjgl.opengl.GL15C.*;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30C.*;
-import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 public class BaseMesh implements IMesh {
     public static final ShaderProgram BASE_PROGRAM = new ShaderProgram(
@@ -110,9 +108,9 @@ public class BaseMesh implements IMesh {
     }
 
     /**
-     * Toggle mesh fade animation after being baked
+     * Enable/Disable mesh fade animation after being baked
      * */
-    public void toggleFade(boolean state) {
+    public void enableFade(boolean state) {
         this.enableFadeAnimation = state;
     }
 
@@ -186,12 +184,12 @@ public class BaseMesh implements IMesh {
 
 
     @Override
-    public void render(RenderContext context) {
-        render(context, mode);
+    public void render(Renderer renderer) {
+        render(renderer, mode);
     }
 
     @Override
-    public void render(RenderContext context, int mode) {
+    public void render(Renderer renderer, int mode) {
         if (!BASE_PROGRAM.isBaked() || !INSTANCED_BASE_PROGRAM.isBaked()) {
             BASE_PROGRAM.bake();
             INSTANCED_BASE_PROGRAM.bake();
@@ -219,25 +217,25 @@ public class BaseMesh implements IMesh {
             program.updateModelMatrix(getModelMatrix());
             program.setUniformVector4f("color", color.asVector4f());
             program.setUniformFloat("opacity", this.opacity * MathUtils.easeInOutCirc(meshFade));
-            Viewport viewport = context.getViewport();
+            ViewportManager viewport = renderer.getViewport();
             viewport.uploadMatrices(program);
             program.use();
         }
 
         // Render the mesh
         if (verticesCount > 0)
-            context.getRenderer().drawCall(Renderer.DrawCall.ARRAYS, vao, mode, verticesCount);
+            renderer.drawCall(Renderer.DrawCall.ARRAYS, vao, mode, verticesCount);
         else if (indicesCount > 0)
-            context.getRenderer().drawCall(Renderer.DrawCall.ELEMENTS, ebo, mode, indicesCount);
+            renderer.drawCall(Renderer.DrawCall.ELEMENTS, ebo, mode, indicesCount);
     }
 
     @Override
-    public void renderInstanced(RenderContext context) {
-        this.renderInstanced(context, mode);
+    public void renderInstanced(Renderer renderer) {
+        this.renderInstanced(renderer, mode);
     }
 
     @Override
-    public void renderInstanced(RenderContext context, int mode) {
+    public void renderInstanced(Renderer renderer, int mode) {
         if (!BASE_PROGRAM.isBaked() || !INSTANCED_BASE_PROGRAM.isBaked()) {
             BASE_PROGRAM.bake();
             INSTANCED_BASE_PROGRAM.bake();
@@ -263,18 +261,18 @@ public class BaseMesh implements IMesh {
         this.instancedProgram.setUniformVector4f("color", color.asVector4f());
         this.instancedProgram.setUniformFloat("opacity", this.opacity * MathUtils.easeInOutCirc(meshFade));
         this.instancedProgram.use();
-        Viewport viewport = context.getViewport();
+        ViewportManager viewport = renderer.getViewport();
         viewport.uploadMatrices(this.instancedProgram);
 
         // Render the mesh
         if (verticesCount > 0)
-            context.getRenderer().drawCallInstanced(Renderer.DrawCall.ARRAYS, vao, mode, verticesCount, this.instances.size());
+            renderer.drawCallInstanced(Renderer.DrawCall.ARRAYS, vao, mode, verticesCount, this.instances.size());
         else if (indicesCount > 0)
-            context.getRenderer().drawCallInstanced(Renderer.DrawCall.ELEMENTS, ebo, mode, indicesCount, this.instances.size());
+            renderer.drawCallInstanced(Renderer.DrawCall.ELEMENTS, ebo, mode, indicesCount, this.instances.size());
     }
 
     @Override
-    public void setQuality(MeshQuality quality) {
+    public void setQuality(Quality quality) {
         this.makeDirty();
         // Does noting by default
     }
@@ -337,7 +335,7 @@ public class BaseMesh implements IMesh {
     public void bake() {
         // Some classes which extend this BaseMesh class sometimes would want not to render the mesh.
         // In this case, skip the baking process if the mesh rendering is disabled
-        if (getQuality() == MeshQuality.NOT_RENDERED)
+        if (getQuality() == Quality.NOT_RENDERED)
             return;
         if (!this.isDirty && this.isBaked)
             return;
@@ -394,8 +392,8 @@ public class BaseMesh implements IMesh {
     }
 
     @Override
-    public MeshQuality getQuality() {
-        return MeshQuality.HIGH;
+    public Quality getQuality() {
+        return Quality.HIGH;
     }
 
     public VerticesBuffer getVerticesBuffer() {

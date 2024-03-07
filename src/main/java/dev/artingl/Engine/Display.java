@@ -283,6 +283,10 @@ public class Display {
         return isInFocus;
     }
 
+    public boolean isCursorCaptured() {
+        return isCursorCaptured;
+    }
+
     public boolean captureCursor(boolean state) {
         if (isInFocus()) {
             this.isCursorCaptured = state;

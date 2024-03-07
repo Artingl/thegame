@@ -1,6 +1,7 @@
 package dev.artingl.Engine.renderer.mesh;
 
 import dev.artingl.Engine.misc.Color;
+import dev.artingl.Engine.renderer.Quality;
 import dev.artingl.Engine.resources.texture.Texture;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Vector2f;
@@ -11,15 +12,15 @@ import java.util.List;
 
 public class SphereMesh extends BaseMesh {
 
-    private final float radius;
+    private float radius;
     private boolean updateMesh;
-    private MeshQuality currentQuality;
+    private Quality currentQuality;
 
     public SphereMesh(Color color, Texture texture, float radius) {
         this.setTexture(texture);
         this.setColor(color);
         this.radius = radius;
-        this.currentQuality = MeshQuality.HIGH;
+        this.currentQuality = Quality.HIGH;
         this.updateMesh = true;
     }
 
@@ -31,6 +32,7 @@ public class SphereMesh extends BaseMesh {
         // http://www.songho.ca/opengl/gl_sphere.html
         VerticesBuffer buffer = new VerticesBuffer(VerticesBuffer.Attribute.VEC3F, VerticesBuffer.Attribute.VEC3F, VerticesBuffer.Attribute.VEC2F);
         List<Pair<Vector3f, Vector2f>> vertices = new ArrayList<>();
+        this.radius = radius;
 
         float sectorStep = (float) (2 * Math.PI / sectorCount);
         float stackStep = (float) (Math.PI / stackCount);
@@ -121,8 +123,8 @@ public class SphereMesh extends BaseMesh {
     @Override
     public void bake() {
         if (this.updateMesh) {
-            int stackCount = currentQuality == MeshQuality.HIGH ? 48 : currentQuality == MeshQuality.MEDIUM ? 28 : 7;
-            int sectorCount = currentQuality == MeshQuality.HIGH ? 32 : currentQuality == MeshQuality.MEDIUM ? 25 : 12;
+            int stackCount = currentQuality == Quality.HIGH ? 48 : currentQuality == Quality.MEDIUM ? 28 : 7;
+            int sectorCount = currentQuality == Quality.HIGH ? 32 : currentQuality == Quality.MEDIUM ? 25 : 12;
             this.setVertices(this.generateSphereVertices(radius, stackCount, sectorCount));
             this.updateMesh = false;
         }

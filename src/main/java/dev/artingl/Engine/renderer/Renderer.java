@@ -6,12 +6,14 @@ import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.debug.Profiler;
+import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.renderer.mesh.MeshManager;
-import dev.artingl.Engine.renderer.pipeline.IPipeline;
-import dev.artingl.Engine.renderer.pipeline.PipelineManager;
-import dev.artingl.Engine.renderer.postprocessing.PostprocessManager;
+import dev.artingl.Engine.renderer.visual.FontManager;
+import dev.artingl.Engine.renderer.visual.postprocessing.PostprocessManager;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
-import dev.artingl.Engine.renderer.viewport.Viewport;
+import dev.artingl.Engine.renderer.viewport.ViewportManager;
+import dev.artingl.Engine.renderer.visual.shadow.ShadowsManager;
+import dev.artingl.Engine.world.scene.BaseScene;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL20C;
 
@@ -24,10 +26,11 @@ import static org.lwjgl.opengl.GL31C.glDrawElementsInstanced;
 public class Renderer {
 
     private final Logger logger;
+    private final Engine engine;
 
-    private final PipelineManager pipeline;
-    private final Viewport viewport;
+    private final ViewportManager viewport;
     private final PostprocessManager postprocessManager;
+    private final ShadowsManager shadowsManager;
     private final MeshManager meshManager;
     private final FontManager fontManager;
     private ShaderProgram programInUse;
@@ -35,71 +38,72 @@ public class Renderer {
     private int eboInUse;
     private Framebuffer currentFramebuffer;
     private boolean isWireframeEnabled;
-    private final Framebuffer framebuffer;
+    private final Framebuffer mainFramebuffer, uiFramebuffer;
 
-
-    public Renderer(Logger logger) {
+    public Renderer(Logger logger, Engine engine) {
         this.logger = logger;
-        this.viewport = new Viewport(this.logger, this);
-        this.pipeline = new PipelineManager(this.logger, this);
+        this.engine = engine;
+        this.viewport = new ViewportManager(this.logger, this);
+        this.shadowsManager = new ShadowsManager(this.logger, this);
         this.postprocessManager = new PostprocessManager(this.logger);
         this.meshManager = new MeshManager(this.logger, this);
         this.fontManager = new FontManager(this.logger, this);
         this.isWireframeEnabled = false;
-        this.framebuffer = new Framebuffer();
-        this.pipeline.append(this.postprocessManager);
+        this.uiFramebuffer = new Framebuffer();
+        this.mainFramebuffer = new Framebuffer();
+//        this.pipeline.append(this.shadowsManager);
+//        this.pipeline.append(this.postprocessManager);
     }
 
     public void create() throws EngineException {
         this.fontManager.init();
-        this.framebuffer.init();
+        this.uiFramebuffer.init();
+        this.mainFramebuffer.init();
         this.meshManager.init();
-        this.pipeline.init();
+        this.shadowsManager.init();
+        this.postprocessManager.init();
     }
 
     public void terminate() {
-        this.framebuffer.cleanup();
         this.fontManager.cleanup();
-        this.pipeline.cleanup();
+        this.uiFramebuffer.cleanup();
+        this.mainFramebuffer.cleanup();
+        this.shadowsManager.cleanup();
+        this.postprocessManager.cleanup();
         this.meshManager.cleanup();
-    }
-
-    /**
-     * Add an instance to the pipeline
-     *
-     * @param instance The instance to be added
-     */
-    public void pipelineAdd(IPipeline instance) {
-        this.logger.log(LogLevel.INFO, "Appending new interface to the pipeline: %s", instance.toString());
-        this.pipeline.append(instance);
-        this.pipeline.makeLast(this.postprocessManager);
     }
 
     /**
      * Make all calls necessary for the frame to be rendered (make pipeline calls, etc.)
      */
     public void frame() throws EngineException {
-        if (this.framebuffer.updateBuffer())
+        BaseScene scene = engine.getSceneManager().getCurrentScene();
+        if (scene == null || this.mainFramebuffer.updateBuffer() || this.uiFramebuffer.updateBuffer())
             return;
 
         this.programInUse = null;
+        this.currentFramebuffer = null;
         this.vaoInUse = -1;
         this.eboInUse = -1;
+
+        this.fontManager.frame();
 
         if (isWireframeEnabled)
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         else
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        bindFramebuffer(framebuffer);
-        this.framebuffer.clear();
-        this.viewport.update();
-        this.viewport.clear();
-        this.pipeline.call();
+        this.uiFramebuffer.clear(this, Color.TRANSPARENT);
+        this.mainFramebuffer.clear(this, viewport.getBackgroundColor());
+        bindFramebuffer(mainFramebuffer);
+        scene.prepareFrame(this);
+        scene.render(this, BaseScene.Layer.MAIN, scene.getMainCamera());
+        scene.render(this, BaseScene.Layer.UI, scene.getUiCamera());
+        this.postprocessManager.render(this);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        bindFramebuffer(null);
     }
 
-    public Viewport getViewport() {
+    public ViewportManager getViewport() {
         return this.viewport;
     }
 
@@ -133,7 +137,7 @@ public class Renderer {
 
         Display display = Engine.getInstance().getDisplay();
         this.currentFramebuffer = fb;
-        glBindFramebuffer(GL_FRAMEBUFFER, fb.getFramebuffer());
+        glBindFramebuffer(GL_FRAMEBUFFER, fb.getBufferId());
         glViewport(0, 0, display.getWidth(), display.getHeight());
         Engine.getInstance().getProfiler().incCounter(Profiler.Task.FRAMEBUFFER_BINDS);
     }
@@ -143,7 +147,11 @@ public class Renderer {
     }
 
     public Framebuffer getMainFramebuffer() {
-        return framebuffer;
+        return mainFramebuffer;
+    }
+
+    public Framebuffer getUiFramebuffer() {
+        return uiFramebuffer;
     }
 
     public void drawCall(DrawCall type, int array, int mode, int count) {
@@ -204,14 +212,6 @@ public class Renderer {
         Engine.getInstance().getProfiler().incCounter(Profiler.Task.DRAW_CALLS);
         Engine.getInstance().getProfiler().addCounter(Profiler.Task.VERTICES_DRAWN, count);
         Engine.getInstance().getProfiler().addGpuTime((System.nanoTime() - start) / 1000000f);
-    }
-
-    public boolean isPostprocessingEnabled() {
-        return this.viewport.isPostprocessingEnabled();
-    }
-
-    public PipelineManager getPipeline() {
-        return pipeline;
     }
 
     public MeshManager getMeshManager() {

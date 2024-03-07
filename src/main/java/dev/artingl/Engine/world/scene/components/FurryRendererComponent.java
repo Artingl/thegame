@@ -3,7 +3,7 @@ package dev.artingl.Engine.world.scene.components;
 import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.misc.Color;
-import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.IMesh;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Engine.renderer.shader.Shader;
@@ -11,8 +11,6 @@ import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import dev.artingl.Engine.renderer.shader.ShaderType;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.world.scene.nodes.SceneNode;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
 
 public class FurryRendererComponent extends Component {
 
@@ -53,11 +51,11 @@ public class FurryRendererComponent extends Component {
     }
 
     @Override
-    public void render(SceneNode node, RenderContext context) {
+    public void render(SceneNode node, Renderer renderer) {
         if (!FURRY_PROGRAM.isBaked())
             FURRY_PROGRAM.bake();
 
-        super.render(node, context);
+        super.render(node, renderer);
         if (!this.meshComponent.enableRendering || !this.isEnabled)
             return;
 
@@ -76,7 +74,7 @@ public class FurryRendererComponent extends Component {
         FURRY_PROGRAM.setUniformInt("m_objType", type.ordinal());
         FURRY_PROGRAM.setUniformFloat("m_totalLayers", layers);
         FURRY_PROGRAM.setUniformVector3f("furColor", color.asVector3f());
-        mesh.renderInstanced(context);
+        mesh.renderInstanced(renderer);
 
         // Return the default instanced shader
         mesh.setInstancedShaderProgram(defaultShader);

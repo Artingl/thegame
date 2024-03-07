@@ -6,10 +6,10 @@ import dev.artingl.Engine.world.scene.BaseScene;
 import dev.artingl.Engine.world.scene.components.MeshComponent;
 import dev.artingl.Engine.world.scene.components.transform.TransformComponent;
 import dev.artingl.Engine.world.scene.nodes.SceneNode;
-import dev.artingl.Game.GameDirector;
 import dev.artingl.Game.level.Level;
 import dev.artingl.Game.level.ambient.Sky;
-import dev.artingl.Game.scene.MapScene;
+import dev.artingl.Game.scene.DevScene;
+import dev.artingl.Game.scene.GameScene;
 import dev.artingl.Game.scene.node.PlayerControllerNode;
 
 public class SkyNode extends SceneNode {
@@ -28,7 +28,7 @@ public class SkyNode extends SceneNode {
         TransformComponent transform = getTransform();
         BaseScene scene = getScene();
 
-        if (scene instanceof MapScene map) {
+        if (scene instanceof GameScene map) {
             Level level = map.getLevel();
             PlayerControllerNode playerController = map.getPlayerController();
 

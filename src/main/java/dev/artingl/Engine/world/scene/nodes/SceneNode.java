@@ -3,7 +3,7 @@ package dev.artingl.Engine.world.scene.nodes;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
-import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.world.scene.BaseScene;
 import dev.artingl.Engine.world.scene.components.Component;
 import dev.artingl.Engine.world.scene.components.transform.TransformComponent;
@@ -26,24 +26,24 @@ public class SceneNode implements TickListener {
     private BaseScene scene;
     private SceneNode parent;
     private String nametag;
-    private BaseScene.Layers layer;
+    private BaseScene.Layer layer;
 
     public boolean isEnabled;
 
     public SceneNode() {
         // Generate unique id for the node
-        this(BaseScene.Layers.MAIN, UUID.randomUUID());
+        this(BaseScene.Layer.MAIN, UUID.randomUUID());
     }
 
-    public SceneNode(BaseScene.Layers layer) {
+    public SceneNode(BaseScene.Layer layer) {
         this(layer, UUID.randomUUID());
     }
 
     public SceneNode(UUID uuid) {
-        this(BaseScene.Layers.MAIN, uuid);
+        this(BaseScene.Layer.MAIN, uuid);
     }
 
-    public SceneNode(BaseScene.Layers layer, UUID uuid) {
+    public SceneNode(BaseScene.Layer layer, UUID uuid) {
         this.uuid = uuid;
         this.children = new ArrayList<>();
         this.components = new ArrayList<>();
@@ -57,14 +57,14 @@ public class SceneNode implements TickListener {
     /**
      * Set node's rendering layer
      * */
-    public void setLayer(BaseScene.Layers layer) {
+    public void setLayer(BaseScene.Layer layer) {
         this.layer = layer;
     }
 
     /**
      * Get node's rendering layer
      * */
-    public BaseScene.Layers getLayer() {
+    public BaseScene.Layer getLayer() {
         return layer;
     }
 
@@ -265,9 +265,9 @@ public class SceneNode implements TickListener {
     /**
      * Called every frame to render the node.
      *
-     * @param context The current render context
+     * @param renderer The current renderer
      */
-    public void render(RenderContext context) {
+    public void render(Renderer renderer) {
         this.renderingAborted = false;
         if (!this.isEnabled)
             return;
@@ -275,7 +275,7 @@ public class SceneNode implements TickListener {
             return;
 
         for (Component component : components) {
-            component.render(this, context);
+            component.render(this, renderer);
         }
     }
 

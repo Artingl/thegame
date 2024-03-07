@@ -5,8 +5,8 @@ import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.debug.Logger;
 import dev.artingl.Engine.world.Dimension;
-import dev.artingl.Engine.renderer.viewport.IViewport;
 import dev.artingl.Engine.renderer.viewport.Viewport;
+import dev.artingl.Engine.renderer.viewport.ViewportManager;
 import dev.artingl.Engine.world.scene.BaseScene;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -53,8 +53,8 @@ public class SoundsManager {
     }
 
     public void frame() {
-        Viewport viewport = engine.getRenderer().getViewport();
-        IViewport iviewport = viewport.getCurrentViewport();
+        ViewportManager viewport = engine.getRenderer().getViewport();
+        Viewport iviewport = viewport.getCurrentViewport();
 
         // Check if we have any active viewports to which we can play the sound
         if (iviewport != null) {

@@ -3,7 +3,7 @@ package dev.artingl.Engine.world.scene.components;
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
-import dev.artingl.Engine.renderer.RenderContext;
+import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.mesh.IMesh;
 import dev.artingl.Engine.renderer.mesh.VerticesBuffer;
 import dev.artingl.Engine.world.scene.components.transform.InstancedTransformComponent;
@@ -30,7 +30,7 @@ public class InstancedMeshComponent extends MeshComponent {
     }
 
     @Override
-    public void render(SceneNode node, RenderContext context) {
+    public void render(SceneNode node, Renderer renderer) {
         if (mesh != null && enableRendering) {
             if (getNode().getTransform() instanceof InstancedTransformComponent transform) {
                 // Update transform instances for the mesh if they were updated
@@ -42,7 +42,7 @@ public class InstancedMeshComponent extends MeshComponent {
                     this.mesh.bake();
                 }
 
-                this.mesh.renderInstanced(context);
+                this.mesh.renderInstanced(renderer);
             } else {
                 Engine.getInstance().getLogger().log(LogLevel.WARNING, "Instanced Mesh Renderer can work only with Instanced Transform Component!");
             }

@@ -1,6 +1,7 @@
 package dev.artingl.Engine.resources;
 
 import dev.artingl.Engine.debug.Logger;
+import dev.artingl.Engine.renderer.Quality;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +24,7 @@ public class Options {
     public void load() {
         this.options.put(Values.DEBUG, false);
         this.options.put(Values.RENDER_DISTANCE, 0.5f);
+        this.options.put(Values.QUALITY_SETTING, Quality.HIGH);
     }
 
     /**
@@ -71,7 +73,7 @@ public class Options {
     }
 
     public enum Values {
-        DEBUG, RENDER_DISTANCE
+        DEBUG, QUALITY_SETTING, RENDER_DISTANCE
     }
 
 }

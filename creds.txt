@@ -13,3 +13,6 @@ https://pixabay.com/sound-effects/night-ambience-17064/
 https://opengameart.org/content/electronic-device-loop
 https://opengameart.org/content/laptop-0
 https://github.com/flowchartsman/greybeard
+https://opengameart.org/content/mortis-and-tenon-table
+https://opengameart.org/content/beige-stone-tile-floor-256px
+https://opengameart.org/content/wooden-floortile-seamless-with-normalmap

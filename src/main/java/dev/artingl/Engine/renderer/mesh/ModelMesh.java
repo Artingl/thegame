@@ -2,9 +2,10 @@ package dev.artingl.Engine.renderer.mesh;
 
 import dev.artingl.Engine.Engine;
 import dev.artingl.Engine.debug.LogLevel;
+import dev.artingl.Engine.renderer.Quality;
+import dev.artingl.Engine.renderer.Renderer;
 import dev.artingl.Engine.renderer.models.IModel;
 import dev.artingl.Engine.renderer.models.ModelProperties;
-import dev.artingl.Engine.renderer.RenderContext;
 import dev.artingl.Engine.renderer.shader.ShaderProgram;
 import dev.artingl.Engine.resources.texture.Texture;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,6 @@ import org.joml.Matrix4f;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.lwjgl.opengl.GL11C.GL_LINES;
 import static org.lwjgl.opengl.GL11C.GL_TRIANGLES;
 
 public class ModelMesh implements IMesh {
@@ -28,7 +28,7 @@ public class ModelMesh implements IMesh {
     private final String[] customMeshes;
     private final List<String> meshes;
     private final List<VerticesBuffer> instances;
-    private MeshQuality currentQuality;
+    private Quality currentQuality;
     private Matrix4f modelMatrix;
     private int totalIndices, totalVertices;
     private boolean isDirty;
@@ -55,7 +55,7 @@ public class ModelMesh implements IMesh {
         this.meshes = new ArrayList<>();
         this.instances = new ArrayList<>();
         this.modelMatrix = new Matrix4f();
-        this.currentQuality = MeshQuality.HIGH;
+        this.currentQuality = Quality.HIGH;
         this.mode = GL_TRIANGLES;
         this.isDirty = true;
         this.enableFadeAnimation = true;
@@ -127,8 +127,8 @@ public class ModelMesh implements IMesh {
     }
 
     @Override
-    public void render(RenderContext context) {
-        render(context, mode);
+    public void render(Renderer renderer) {
+        render(renderer, mode);
     }
 
     private void prepareRender(ShaderProgram program, BaseMesh mesh, String name) {
@@ -154,7 +154,7 @@ public class ModelMesh implements IMesh {
     }
 
     @Override
-    public void render(RenderContext context, int mode) {
+    public void render(Renderer renderer, int mode) {
         int vert = 0, ind = 0;
         ShaderProgram program;
 
@@ -182,9 +182,9 @@ public class ModelMesh implements IMesh {
             program = mesh.getShaderProgram();
 
             this.prepareRender(program, mesh, name);
-            mesh.toggleFade(this.enableFadeAnimation);
+            mesh.enableFade(this.enableFadeAnimation);
             mesh.transform(modelMatrix);
-            mesh.render(context, mode);
+            mesh.render(renderer, mode);
         }
 
         this.totalVertices = vert;
@@ -192,12 +192,12 @@ public class ModelMesh implements IMesh {
     }
 
     @Override
-    public void renderInstanced(RenderContext context) {
-        renderInstanced(context, mode);
+    public void renderInstanced(Renderer renderer) {
+        renderInstanced(renderer, mode);
     }
 
     @Override
-    public void renderInstanced(RenderContext context, int mode) {
+    public void renderInstanced(Renderer renderer, int mode) {
         int vert = 0, ind = 0;
         ShaderProgram program;
 
@@ -225,9 +225,9 @@ public class ModelMesh implements IMesh {
             program = mesh.getInstancedShaderProgram();
 
             this.prepareRender(program, mesh, name);
-            mesh.toggleFade(this.enableFadeAnimation);
+            mesh.enableFade(this.enableFadeAnimation);
             mesh.transform(modelMatrix);
-            mesh.renderInstanced(context, mode);
+            mesh.renderInstanced(renderer, mode);
         }
 
         this.totalVertices = vert;
@@ -235,7 +235,7 @@ public class ModelMesh implements IMesh {
     }
 
     @Override
-    public void setQuality(MeshQuality quality) {
+    public void setQuality(Quality quality) {
         if (this.currentQuality != quality)
             this.isDirty = true;
         this.currentQuality = quality;
@@ -289,7 +289,7 @@ public class ModelMesh implements IMesh {
     }
 
     @Override
-    public MeshQuality getQuality() {
+    public Quality getQuality() {
         return currentQuality;
     }
 

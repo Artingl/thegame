@@ -1,6 +1,7 @@
 package dev.artingl.Engine.debug;
 
-import dev.artingl.Engine.renderer.postprocessing.PostprocessEffect;
+import dev.artingl.Engine.renderer.Quality;
+import dev.artingl.Engine.renderer.visual.postprocessing.PostprocessEffect;
 import dev.artingl.Engine.world.scene.SceneManager;
 import dev.artingl.Engine.world.scene.components.annotations.ComponentFinalField;
 import dev.artingl.Engine.world.scene.components.annotations.ComponentIgnoreField;
@@ -15,7 +16,7 @@ import dev.artingl.Engine.renderer.mesh.IMesh;
 import dev.artingl.Engine.world.scene.BaseScene;
 import dev.artingl.Engine.world.scene.components.Component;
 import dev.artingl.Engine.world.scene.nodes.SceneNode;
-import dev.artingl.Engine.renderer.viewport.IViewport;
+import dev.artingl.Engine.renderer.viewport.Viewport;
 import dev.artingl.Engine.resources.Resource;
 import dev.artingl.Engine.resources.texture.TextureManager;
 import dev.artingl.Engine.timer.Timer;
@@ -42,6 +43,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class Debugger {
 
@@ -66,7 +68,6 @@ public class Debugger {
         this.glfwImpl.init(Engine.getInstance().getDisplay().getWindowId(), true);
 
         ImGuiIO io = ImGui.getIO();
-        io.addConfigFlags(ImGuiConfigFlags.NavEnableKeyboard);  // Enable Keyboard Controls
 //        io.addConfigFlags(ImGuiConfigFlags.DockingEnable);      // Enable Docking
 //        io.setIniFilename("");
         io.setConfigViewportsNoTaskBarIcon(true);
@@ -95,13 +96,26 @@ public class Debugger {
         Timer timer = engine.getTimer();
         Display display = engine.getDisplay();
 
+        ImGuiIO io = ImGui.getIO();
+        if (engine.getDisplay().isCursorCaptured()) {
+            io.removeConfigFlags(ImGuiConfigFlags.NavEnableKeyboard);
+            io.addConfigFlags(ImGuiConfigFlags.NavNoCaptureKeyboard);
+            io.addConfigFlags(ImGuiConfigFlags.NoMouse);
+        }
+        else {
+            io.removeConfigFlags(ImGuiConfigFlags.NoMouse);
+            io.removeConfigFlags(ImGuiConfigFlags.NavNoCaptureKeyboard);
+            io.addConfigFlags(ImGuiConfigFlags.NavEnableKeyboard);
+        }
+
         SceneManager sceneManager = engine.getSceneManager();
         BaseScene currentScene = sceneManager.getCurrentScene();
 
         // Window with debug info
         if (ImGui.begin("Debug",
                 ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove |
-                        ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoBringToFrontOnFocus)) {
+                        ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoBringToFrontOnFocus |
+                        ImGuiWindowFlags.AlwaysAutoResize)) {
             if (firstFrame) {
                 ImVec2 size = ImGui.getWindowSize();
                 ImGui.setWindowPos(2, 2);
@@ -115,7 +129,6 @@ public class Debugger {
             ImGui.text("Framebuffer binds: " + profiler.getCounter(Profiler.Task.FRAMEBUFFER_BINDS));
             ImGui.text("Draw calls: " + profiler.getCounter(Profiler.Task.DRAW_CALLS));
             ImGui.text("Vertices drawn: " + profiler.getCounter(Profiler.Task.VERTICES_DRAWN));
-            ImGui.text("Pipeline size: " + renderer.getPipeline().totalElements());
             ImGui.separator();
 
             ImGui.text("Ticks: " + timer.getTicks());
@@ -127,10 +140,12 @@ public class Debugger {
             ImGui.text("GPU: " + engine.getGraphicsInfo());
 
             float[] rd = new float[]{engine.getOptions().getFloat(Options.Values.RENDER_DISTANCE)};
+            Quality quality = (Quality) drawEnum((Quality) engine.getOptions().get(Options.Values.QUALITY_SETTING));
             ImGui.sliderFloat("Render Distance", rd, 0.1f, 1f);
             engine.getOptions().set(Options.Values.RENDER_DISTANCE, rd[0]);
-            if (ImGui.button("Potato graphics"))
-                engine.getOptions().set(Options.Values.RENDER_DISTANCE, 0.0f);
+            if (quality.equals(Quality.POTATO))
+                engine.getOptions().set(Options.Values.RENDER_DISTANCE, 0.1f);
+            engine.getOptions().set(Options.Values.QUALITY_SETTING, quality);
             ImGui.separator();
 
             if (ImGui.button("Reload"))
@@ -242,17 +257,22 @@ public class Debugger {
     }
 
     public void drawPostprocessEffect(PostprocessEffect effect) {
-        if (ImGui.collapsingHeader(effect.getClass().getSimpleName())) {
+        if (ImGui.collapsingHeader(effect.getClass().getSimpleName() + "##" + effect.hashCode())) {
             Boolean isEnabled = (Boolean)drawElement(true, "Is Enabled", effect.isEnabled());
             if (isEnabled != null)
                 effect.setEnabled(isEnabled);
 
             for (Map.Entry<String, Object> property: effect.getProperties()) {
                 Object value = drawAsType(property.getValue().getClass(), Utils.prettify(property.getKey()), property.getValue(), true);
-                effect.setProperty(property.getKey(), value);
+                if (value != null)
+                    effect.setProperty(property.getKey(), value);
             }
             ImGui.separator();
         }
+    }
+
+    public String randomUUID() {
+        return UUID.randomUUID().toString();
     }
 
     public void drawSceneNode(SceneNode node, BaseScene scene, int depth) {
@@ -309,7 +329,7 @@ public class Debugger {
             }
 
             components.add(name);
-            if (ImGui.collapsingHeader(name)) {
+            if (ImGui.collapsingHeader(name + "##" + node.getUUID())) {
                 // Render properties for all known fields
                 for (Field field : component.getClass().getFields()) {
                     if (drawnFields.contains(field.getName()))
@@ -354,12 +374,13 @@ public class Debugger {
     }
 
     private Object drawAsType(Class<?> clazz, String name, Object value, boolean canEdit) {
+        name += "##" + clazz.hashCode();
         Object result = null;
         if (clazz.equals(Vector3f.class)) result = drawElement(canEdit, name, (Vector3f) value);
         if (clazz.equals(Vector3i.class)) result = drawElement(canEdit, name, (Vector3i) value);
         if (clazz.equals(Vector2f.class)) result = drawElement(canEdit, name, (Vector2f) value);
         if (clazz.equals(Vector2i.class)) result = drawElement(canEdit, name, (Vector2i) value);
-        if (clazz.equals(IViewport.Type.class)) result = drawElement(name, (IViewport.Type) value);
+        if (clazz.equals(Viewport.ViewType.class)) result = drawElement(name, (Viewport.ViewType) value);
         if (clazz.equals(IMesh.class)) result = drawElement(name, (IMesh) value);
         if (clazz.equals(String.class)) result = drawElement(canEdit, name, (String) value);
         if (clazz.equals(Color.class)) result = drawElement(name, (Color) value);
@@ -471,15 +492,15 @@ public class Debugger {
         return null;
     }
 
-    private Object drawElement(String name, IViewport.Type v) {
+    private Object drawElement(String name, Viewport.ViewType v) {
         if (v == null)
-            return IViewport.Type.PERSPECTIVE;
+            return Viewport.ViewType.PERSPECTIVE;
 
         if (ImGui.button("Orthographic"))
-            return IViewport.Type.ORTHOGRAPHIC;
+            return Viewport.ViewType.ORTHOGRAPHIC;
         ImGui.sameLine();
         if (ImGui.button("Perspective"))
-            return IViewport.Type.PERSPECTIVE;
+            return Viewport.ViewType.PERSPECTIVE;
         return null;
     }
 

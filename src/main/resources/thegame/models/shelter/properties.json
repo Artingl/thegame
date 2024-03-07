@@ -8,6 +8,11 @@
     "texture_tile": true
   },
   
+  "material.ceiling": {
+	"texture": "thegame:models/shelter/ceiling",
+	"texture_tile": true
+  },
+  
   "material.wall0": {
 	"texture": "thegame:models/shelter/wall",
 	"texture_tile": true
@@ -56,6 +61,6 @@
   "material.wall9": {
 	"texture": "thegame:models/shelter/wall",
 		"texture_tile": true
-  },
+  }
 
 }

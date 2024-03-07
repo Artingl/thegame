@@ -7,9 +7,11 @@ uniform sampler2D fbTex;
 uniform sampler2D ppTex;
 uniform vec3 screenResolution;
 
+uniform int pixelSize;
+uniform float vignette;
+
 in vec2 uv;
 
-#define PIXEL_SIZE 2.0
 #define PALETTE_SIZE 53
 
 // The input color is quantized to the nearest of these.
@@ -144,13 +146,12 @@ vec3 applyPalette(in vec3 c, in vec2 iuv) {
     return o;
 }
 
-
 void main() {
     vec2 p = uv;
-    p.x -= mod(p.x, 1.0 / (screenResolution.x / PIXEL_SIZE));
-    p.y -= mod(p.y, 1.0 / (screenResolution.y / PIXEL_SIZE));
-    vec3 clr = texture(ppTex, p).xyz;
-    clr = applyPalette(clr, uv);
-    clr *= 0.5 + 0.5 * pow(16 * uv.x * uv.y * (1.0 - uv.x) * (1.0 - uv.y), 0.2);
-    fragColor = vec4(clr, 1);
+    p.x -= mod(p.x, 1.0 / (screenResolution.x / pixelSize));
+    p.y -= mod(p.y, 1.0 / (screenResolution.y / pixelSize));
+    vec3 col = texture(ppTex, p).xyz;
+    float vignetteWeight = 0.5 + 0.5 * pow(16 * uv.x * uv.y * (1.0 - uv.x) * (1.0 - uv.y), vignette);
+    col *= vignetteWeight;
+    fragColor = vec4(col, 1);
 }

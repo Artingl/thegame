@@ -1,5 +1,7 @@
 package dev.artingl.Engine.resources.texture;
 
+import dev.artingl.Engine.Engine;
+import dev.artingl.Engine.misc.Color;
 import dev.artingl.Engine.resources.Resource;
 import org.lwjgl.BufferUtils;
 
@@ -15,7 +17,14 @@ public class Texture {
     public static final Texture MISSING = new Texture(null);
     public static final Texture UV_TEST = new Texture(null);
 
+    public static Texture get(Resource resource) {
+        return Engine.getInstance().getResourceManager().getTextureManager().getTexture(resource);
+    }
+
     private BufferedImage texture;
+    private ByteBuffer buffer;
+    private int format;
+    private int width, height;
     private int textureId;
     private boolean isTiled;
     private boolean updateParams;
@@ -24,6 +33,17 @@ public class Texture {
 
     public Texture(BufferedImage texture) {
         this.texture = texture;
+        this.textureId = -1;
+        this.isTiled = false;
+        this.updateParams = false;
+        this.updateTexture = true;
+    }
+
+    public Texture(ByteBuffer buffer, int format, int width, int height) {
+        this.buffer = buffer;
+        this.width = width;
+        this.height = height;
+        this.format = format;
         this.textureId = -1;
         this.isTiled = false;
         this.updateParams = false;
@@ -62,7 +82,7 @@ public class Texture {
     }
 
     public int getTextureId() {
-        if (texture != null)
+        if (texture != null || buffer != null)
             this.update();
         return textureId;
     }
@@ -85,33 +105,38 @@ public class Texture {
 
                 // Bind texture
                 glBindTexture(GL_TEXTURE_2D, textureId);
+                ByteBuffer buffer = this.buffer;
+                int width = this.width, height = this.height;
+                int textureFormat = this.format;
 
-                int textureType = texture.getType();
-                int bpp = textureType == BufferedImage.TYPE_INT_RGB ? 3 : 4;
-                int textureFormat = bpp == 3 ? GL_RGB : GL_RGBA;
+                if (texture != null) {
+                    int textureType = texture.getType();
+                    int bpp = textureType == BufferedImage.TYPE_INT_RGB ? 3 : 4;
+                    textureFormat = bpp == 3 ? GL_RGB : GL_RGBA;
 
-                // Make byte buffer for the texture (RGBA)
-                int width = texture.getWidth();
-                int height = texture.getHeight();
-                int capacity = width * height * bpp;
-                int[] pixels = new int[texture.getWidth() * texture.getHeight()];
-                ByteBuffer buffer = BufferUtils.createByteBuffer(capacity);
+                    // Make byte buffer for the texture (RGBA)
+                    width = texture.getWidth();
+                    height = texture.getHeight();
+                    int capacity = width * height * bpp;
+                    int[] pixels = new int[texture.getWidth() * texture.getHeight()];
+                    buffer = BufferUtils.createByteBuffer(capacity);
 
-                this.texture.getRGB(0, 0, texture.getWidth(), texture.getHeight(), pixels, 0, texture.getWidth());
-                for (int y = 0; y < texture.getHeight(); y++) {
-                    for (int x = 0; x < texture.getWidth(); x++) {
-                        int pixel = pixels[y * texture.getWidth() + x];
-                        buffer.put((byte) ((pixel >> 16) & 0xFF));
-                        buffer.put((byte) ((pixel >> 8) & 0xFF));
-                        buffer.put((byte) (pixel & 0xFF));
-                        if (bpp > 3)
-                            buffer.put((byte) ((pixel >> 24) & 0xFF));
+                    this.texture.getRGB(0, 0, texture.getWidth(), texture.getHeight(), pixels, 0, texture.getWidth());
+                    for (int y = 0; y < texture.getHeight(); y++) {
+                        for (int x = 0; x < texture.getWidth(); x++) {
+                            int pixel = pixels[y * texture.getWidth() + x];
+                            buffer.put((byte) ((pixel >> 16) & 0xFF));
+                            buffer.put((byte) ((pixel >> 8) & 0xFF));
+                            buffer.put((byte) (pixel & 0xFF));
+                            if (bpp > 3)
+                                buffer.put((byte) ((pixel >> 24) & 0xFF));
+                        }
                     }
+                    buffer.flip();
                 }
-                buffer.flip();
 
                 // Send the buffer to opengl
-                glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, texture.getWidth(), texture.getHeight(), 0, textureFormat, GL_UNSIGNED_BYTE, buffer);
+                glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, width, height, 0, textureFormat, GL_UNSIGNED_BYTE, buffer);
 
                 // Set params and unbind
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -145,5 +170,7 @@ public class Texture {
         this.updateParams = false;
         this.updateTexture = true;
         this.texture = null;
+        if (buffer != null)
+            this.buffer.clear();
     }
 }

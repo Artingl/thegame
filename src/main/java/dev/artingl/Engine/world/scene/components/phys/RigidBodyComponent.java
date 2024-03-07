@@ -1,10 +1,17 @@
 package dev.artingl.Engine.world.scene.components.phys;
 
+import com.jme3.anim.Joint;
 import com.jme3.bullet.PhysicsSpace;
 import com.jme3.bullet.collision.PhysicsCollisionObject;
 import com.jme3.bullet.control.RigidBodyControl;
+import com.jme3.bullet.joints.ConeJoint;
+import com.jme3.bullet.joints.HingeJoint;
+import com.jme3.bullet.joints.PhysicsJoint;
+import com.jme3.bullet.objects.PhysicsRigidBody;
+import com.jme3.export.*;
 import com.jme3.math.Quaternion;
 import dev.artingl.Engine.Engine;
+import dev.artingl.Engine.EngineException;
 import dev.artingl.Engine.debug.LogLevel;
 import dev.artingl.Engine.misc.Utils;
 import dev.artingl.Engine.timer.Timer;
@@ -14,9 +21,13 @@ import dev.artingl.Engine.world.scene.components.phys.collider.MeshColliderCompo
 import dev.artingl.Engine.world.scene.components.transform.TransformComponent;
 import dev.artingl.Engine.world.scene.nodes.CameraNode;
 import dev.artingl.Engine.world.scene.nodes.SceneNode;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
+import java.io.IOException;
+
 public class RigidBodyComponent extends Component implements BodyComponent {
+    public boolean enableRotation = true;
     public boolean enableBody = true;
     public boolean isKinematic = false;
     public float mass;
@@ -43,6 +54,11 @@ public class RigidBodyComponent extends Component implements BodyComponent {
     }
 
     @Override
+    public void init(SceneNode node) throws EngineException {
+        super.init(node);
+    }
+
+    @Override
     public void tick(Timer timer) {
         super.tick(timer);
 
@@ -55,8 +71,10 @@ public class RigidBodyComponent extends Component implements BodyComponent {
         if (this.outOfRangeCheck) {
             CameraNode camera = node.getScene().getMainCamera();
             if (camera != null) {
-                float distance = camera.getPosition().distance(node.getTransform().position);
-                if (distance > 60) {
+                Vector2f v0 = new Vector2f(camera.getPosition().x, camera.getPosition().z);
+                Vector2f v1 = new Vector2f(node.getTransform().position.x, node.getTransform().position.z);
+                float distance = v0.distance(v1);
+                if (distance > 200) {
                     this.body.setEnabled(false);
                     return;
                 }
@@ -81,6 +99,11 @@ public class RigidBodyComponent extends Component implements BodyComponent {
         this.body.setCollisionShape(collider.getShape());
         this.body.setPhysicsSpace(space);
 
+        this.body.setSleepingThresholds(0.1f, 0.1f);
+
+//        BoundingVolume
+//        this.body.setSpatial();
+
         this.updateBody();
     }
 
@@ -98,33 +121,57 @@ public class RigidBodyComponent extends Component implements BodyComponent {
 
         TransformComponent transform = node.getTransform();
         Vector3f position = Utils.jme2joml(body.getPhysicsLocation());
+        Quaternion q = body.getMotionState().getWorldRotationQuat();
+        float[] angles = new float[3];
+        q.toAngles(angles);
         Vector3f rotation = new Vector3f(
-                (float) Math.toDegrees(body.getPhysicsRotation().getX()) + 180,
-                (float) Math.toDegrees(body.getPhysicsRotation().getY()) + 180,
-                (float) Math.toDegrees(body.getPhysicsRotation().getZ()) + 180);
+                (float) Math.toDegrees(angles[0]),
+                (float) Math.toDegrees(angles[1]),
+                (float) Math.toDegrees(angles[2]));
 
         if (!transform.position.equals(lastPos))
-            body.setPhysicsLocation(Utils.joml2jme(transform.position));
-        else transform.position = position;
+            body.setPhysicsLocation(Utils.joml2jme(transform.getWorldPosition()));
+        else transform.setLocalPosition(position);
 
-        if (!transform.rotation.equals(lastRot))
-            body.setPhysicsRotation(new Quaternion().fromAngles(transform.rotation.x, transform.rotation.y, transform.rotation.z));
-        else transform.rotation = rotation;
+        if (!transform.rotation.equals(lastRot) || !enableRotation)
+            body.setPhysicsRotation(new Quaternion().fromAngles((float) Math.toRadians(transform.rotation.x), (float) Math.toRadians(transform.rotation.y), (float) Math.toRadians(transform.rotation.z)));
+        else
+            transform.rotation = rotation;
 
-        lastPos = transform.position;
-        lastRot = transform.rotation;
+        lastPos = new Vector3f(transform.position);
+        lastRot = new Vector3f(transform.rotation);
     }
 
-    public void addVelocity(Vector3f vec) {
+    public void addLinearVelocity(Vector3f vec) {
         this.body.setLinearVelocity(this.body.getLinearVelocity().add(Utils.joml2jme(vec)));
     }
 
-    public void setVelocity(Vector3f vec) {
+    public void setLinearVelocity(Vector3f vec) {
         this.body.setLinearVelocity(Utils.joml2jme(vec));
     }
 
-    public Vector3f getVelocity() {
+    public Vector3f getLinearVelocity() {
         return Utils.jme2joml(this.body.getLinearVelocity());
+    }
+
+    public void addAngularVelocity(Vector3f vec) {
+        this.body.setAngularVelocity(this.body.getAngularVelocity().add(Utils.joml2jme(vec)));
+    }
+
+    public void setAngularVelocity(Vector3f vec) {
+        this.body.setAngularVelocity(Utils.joml2jme(vec));
+    }
+
+    public Vector3f getAngularVelocity() {
+        return Utils.jme2joml(this.body.getAngularVelocity());
+    }
+
+    public float getFriction() {
+        return body.getFriction();
+    }
+
+    public void setFriction(float v) {
+        body.setFriction(v);
     }
 
     /**
@@ -154,4 +201,5 @@ public class RigidBodyComponent extends Component implements BodyComponent {
     public PhysicsCollisionObject getCollisionObject() {
         return this.body;
     }
+
 }
