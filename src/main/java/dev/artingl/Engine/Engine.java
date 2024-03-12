@@ -163,17 +163,18 @@ public class Engine implements TickListener, InputListener {
     }
 
     public void loadLibs() throws Exception {
-        this.logger.log(LogLevel.WARNING, "!!! IF YOU CRASHED AFTER THIS LOG, CHECK PATHS TO LIB FOLDERS !!!");
+        this.logger.log(LogLevel.WARNING, "!!! IF YOU CRASHED AFTER THIS LOG, CHECK YOUR LIBS !!!");
 
         // Load libs from all folders
         for (URI folder: this.libsFolders) {
             Path directory = Paths.get(folder);
+            boolean isWindows = !System.getProperty("os.name").equalsIgnoreCase("linux");
 
             // Load all textures
             try (Stream<Path> walk = Files.walk(directory, 3).filter(Files::isRegularFile)) {
                 for (Iterator<Path> it = walk.iterator(); it.hasNext();) {
                     Path path = it.next();
-                    if (!path.toString().endsWith(".dll"))
+                    if (!path.toString().endsWith(isWindows ? ".dll" : ".so"))
                         continue;
                     this.logger.log(LogLevel.INFO, "Loading library: " + path);
 
@@ -192,15 +193,19 @@ public class Engine implements TickListener, InputListener {
                     }
 
                     // Load the lib
-                    System.load(path.toString());
+                    try {
+                        System.load(path.toString());
+                    } catch (UnsatisfiedLinkError e) {
+                        throw new EngineException("Native code library failed to load.\n" + e);
+                    }
                 }
             }
         }
     }
 
     public void create() throws Exception {
+        this.logger.log(LogLevel.INFO, "Running on " + System.getProperty("os.name"));
         this.logger.log(LogLevel.INFO, "Setting up the engine");
-
         this.loadLibs();
 
         // Setup error callback for GLFW

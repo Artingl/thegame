@@ -8,7 +8,7 @@ version = '1.0-SNAPSHOT'
 
 project.ext.jmeVersion = '3.3.2-stable'
 project.ext.lwjglVersion = "3.3.2-SNAPSHOT"
-project.ext.lwjglNatives = "natives-windows"  // "natives-macos"
+project.ext.lwjglNatives = "natives-windows"
 project.ext.jomlVersion = "1.10.2"
 project.ext.imguiVersion = "1.86.11"
 
@@ -20,6 +20,7 @@ repositories {
     maven {
         url = uri("https://maven.pkg.github.com/fnuecke/sedna")
         credentials {
+            // !!!THIS IS BAD!!!
             username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
             password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
         }

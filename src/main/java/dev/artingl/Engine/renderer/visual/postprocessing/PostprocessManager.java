@@ -151,9 +151,9 @@ public class PostprocessManager {
         this.screenQuad.render(renderer, MODE);
 
         // Render UI
-        POSTPROCESSING_PROGRAM.setTextureUniform("ppTex", renderer.getUiFramebuffer().getFrameTexture());
-        this.screenQuad.setShaderProgram(POSTPROCESSING_PROGRAM);
-        this.screenQuad.render(renderer, MODE);
+//        POSTPROCESSING_PROGRAM.setTextureUniform("ppTex", renderer.getUiFramebuffer().getFrameTexture());
+//        this.screenQuad.setShaderProgram(POSTPROCESSING_PROGRAM);
+//        this.screenQuad.render(renderer, MODE);
 
         if (renderer.isWireframeEnabled())
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

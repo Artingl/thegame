@@ -1,5 +1,6 @@
 package dev.artingl.Game.scene;
 
+import dev.artingl.Engine.renderer.models.IModel;
 import dev.artingl.Engine.renderer.models.OBJModel;
 import dev.artingl.Engine.resources.Resource;
 
@@ -16,6 +17,7 @@ public class Models {
     public static final OBJModel TABLE = new OBJModel(new Resource("thegame", "models/table"));
     public static final OBJModel APARTMENTS = new OBJModel(new Resource("thegame", "models/apartments"));
     public static final OBJModel DOOR = new OBJModel(new Resource("thegame", "models/door"));
+    public static final OBJModel DILDO = new OBJModel(new Resource("thegame", "models/dildo"));
 
 
     // The same order as in EnvironmentObjects
@@ -29,7 +31,8 @@ public class Models {
             SERVER,
             LAPTOP,
             APARTMENTS,
-            DOOR
+            DOOR,
+            DILDO
     };
 
 }

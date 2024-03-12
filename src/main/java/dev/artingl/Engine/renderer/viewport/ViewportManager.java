@@ -99,13 +99,6 @@ public class ViewportManager {
         this.proj.translate(off);
 
         this.frustum.set(new Matrix4f(proj).mul(view));
-
-        // TODO: this is a mess
-        Renderer renderer = Engine.getInstance().getRenderer();
-        if (currentViewport.getRenderType().equals(Viewport.RenderType.MAIN))
-            renderer.bindFramebuffer(renderer.getMainFramebuffer());
-        else
-            renderer.bindFramebuffer(renderer.getUiFramebuffer());
     }
 
     /**

@@ -129,6 +129,7 @@ public class Debugger {
             ImGui.text("Framebuffer binds: " + profiler.getCounter(Profiler.Task.FRAMEBUFFER_BINDS));
             ImGui.text("Draw calls: " + profiler.getCounter(Profiler.Task.DRAW_CALLS));
             ImGui.text("Vertices drawn: " + profiler.getCounter(Profiler.Task.VERTICES_DRAWN));
+            ImGui.text("System: " + System.getProperty("os.name") + "/" + System.getProperty("os.arch"));
             ImGui.separator();
 
             ImGui.text("Ticks: " + timer.getTicks());

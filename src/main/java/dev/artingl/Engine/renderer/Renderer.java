@@ -74,7 +74,7 @@ public class Renderer {
     }
 
     /**
-     * Make all calls necessary for the frame to be rendered (make pipeline calls, etc.)
+     * Make all calls necessary for the frame to be rendered
      */
     public void frame() throws EngineException {
         BaseScene scene = engine.getSceneManager().getCurrentScene();
@@ -96,9 +96,11 @@ public class Renderer {
         this.mainFramebuffer.clear(this, viewport.getBackgroundColor());
         bindFramebuffer(mainFramebuffer);
         scene.prepareFrame(this);
+        bindFramebuffer(mainFramebuffer);
         scene.render(this, BaseScene.Layer.MAIN, scene.getMainCamera());
-        scene.render(this, BaseScene.Layer.UI, scene.getUiCamera());
         this.postprocessManager.render(this);
+        bindFramebuffer(null);
+        scene.render(this, BaseScene.Layer.UI, scene.getUiCamera());
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         bindFramebuffer(null);
     }
