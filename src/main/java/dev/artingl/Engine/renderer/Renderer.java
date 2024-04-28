@@ -103,6 +103,8 @@ public class Renderer {
         scene.render(this, BaseScene.Layer.UI, scene.getUiCamera());
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         bindFramebuffer(null);
+        this.viewport.setViewport(scene.getMainCamera());
+        this.viewport.update();
     }
 
     public ViewportManager getViewport() {

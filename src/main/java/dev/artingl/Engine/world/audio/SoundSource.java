@@ -64,8 +64,7 @@ public class SoundSource {
     public void setPosition(Vector3f position) {
         if (!this.position.equals(position)) {
             this.position = position;
-            stop();
-            play();
+            alSource3f(sourceId, AL_POSITION, position.x, position.y, position.z);
         }
     }
 

@@ -213,12 +213,6 @@ public class DevScene extends BaseScene {
         this.dayAmbientSound.volume = (this.dayAmbientSound.volume + (targetAmbientVolume - this.dayAmbientSound.volume) * volumeChangeSpeed) * dayMultiplier;
 
         // For debugger
-        this.terrainType = getLevel()
-                .getGenerator()
-                .getTerrainTypeAt(
-                        playerController.getTransform().position.x,
-                        playerController.getTransform().position.z
-                ).name();
         this.levelCachedHeights = getLevel().getGenerator().getCacheSize();
     }
 

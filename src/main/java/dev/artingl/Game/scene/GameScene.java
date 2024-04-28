@@ -86,12 +86,6 @@ public class GameScene extends BaseScene {
         ball.getTransform().position.z = 5;
         this.addNode(ball);
 
-        DildoNode dildo = new DildoNode();
-        dildo.getTransform().position.x = 2;
-        dildo.getTransform().position.y = 16;
-        dildo.getTransform().position.z = 5;
-        this.addNode(dildo);
-
         // Initialize the UI
         this.crosshair = new CrosshairNode();
         this.addChild(this.uiPanel, crosshair);
@@ -105,12 +99,6 @@ public class GameScene extends BaseScene {
         getLevel().setTimeSpeed(timeSpeed);
 
         // For debugger
-        this.terrainType = getLevel()
-                .getGenerator()
-                .getTerrainTypeAt(
-                        playerController.getTransform().position.x,
-                        playerController.getTransform().position.z
-                ).name();
         this.levelCachedHeights = getLevel().getGenerator().getCacheSize();
     }
 
